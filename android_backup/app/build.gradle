@@ -1,0 +1,188 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('keys.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+android {
+    namespace "com.tapps.appmaniazar"
+    compileSdkVersion 34
+    ndkVersion "25.1.8937393"
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    defaultConfig {
+        // Application ID and version info
+        applicationId "com.tapps.appmaniazar"
+        minSdkVersion flutter.minSdkVersion
+        targetSdkVersion 34
+        versionCode flutter.versionCode.toInteger()
+        versionName flutter.versionName
+        multiDexEnabled true
+        
+        // NDK configuration
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64'
+        }
+        
+        // Build config fields
+        buildConfigField "String", "BUILD_TIME", "\"${new Date().format('yyyy-MM-dd HH:mm:ss')}\""
+    }
+
+    buildFeatures {
+        viewBinding true
+    }
+
+    signingConfigs {
+        release {
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+            storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
+            storePassword keystoreProperties['storePassword']
+        }
+    }
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            
+            ndk {
+                debugSymbolLevel 'SYMBOL_TABLE' // Reduced from FULL to save space
+                // Only include 64-bit ABIs to reduce size
+                abiFilters 'arm64-v8a', 'x86_64'
+            }
+            
+            // Enable all optimizations
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules-optimized.pro'
+            
+            // Enable R8 full mode for better optimization
+            proguardFile 'proguard-rules.pro'
+            
+            // Enable multidex
+            multiDexEnabled true
+            
+            // Enable resource shrinking and compression
+            crunchPngs true
+            zipAlignEnabled true
+            
+            // Optimize packaging
+            packagingOptions {
+                jniLibs {
+                    useLegacyPackaging false
+                    // Keep only necessary debug symbols
+                    keepDebugSymbols = ['**/lib/*.so']
+                }
+                
+                // Exclude unnecessary files and compress resources
+                exclude 'META-INF/DEPENDENCIES'
+                exclude 'META-INF/LICENSE*'
+                exclude 'META-INF/NOTICE*'
+                exclude 'META-INF/*.version'
+                exclude 'META-INF/*.kotlin_module'
+                exclude 'META-INF/*.properties'
+                exclude '**/DebugProbesKt.bin'
+                
+                // Optimize resources
+                resources {
+                    excludes += [
+                        'META-INF/*',
+                        'META-INF/**/*',
+                        '**/R.class',
+                        '**/R$*.class',
+                        '**/BuildConfig.*',
+                        '**/*.properties',
+                        '**/*.version',
+                        'META-INF/AL2.0',
+                        'META-INF/LGPL2.1'
+                    ]
+                }
+            }
+        }
+        
+        debug {
+            // Apply similar settings for debug builds to catch issues early
+            ndk {
+                abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64'
+            }
+            packagingOptions {
+                jniLibs {
+                    useLegacyPackaging false
+                }
+            }
+        }
+    }
+}
+
+flutter {
+    source = "../.."
+}
+
+// Disable -Werror to allow deprecation warnings in dependencies
+gradle.projectsEvaluated {
+    tasks.withType(JavaCompile) {
+        options.compilerArgs.remove("-Werror")
+    }
+}
+
+dependencies {
+    // Kotlin
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    
+    // Core AndroidX
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.multidex:multidex:2.0.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    
+    // Google Play Services
+    implementation 'com.google.android.gms:play-services-base:18.2.0'
+    implementation 'com.google.android.gms:play-services-basement:18.2.0'
+    implementation 'com.google.android.gms:play-services-tasks:18.0.2'
+    implementation 'com.google.android.gms:play-services-location:21.0.1'
+    implementation 'com.google.android.gms:play-services-maps:18.1.0'
+    
+    // Play Core
+    implementation 'com.google.android.play:app-update:2.1.0'
+    implementation 'com.google.android.play:app-update-ktx:2.1.0'
+    implementation 'com.google.android.play:review:2.0.1'
+    implementation 'com.google.android.play:review-ktx:2.0.1'
+    
+    // Import the Firebase BoM (Bill of Materials) - pinned to a recent version compatible with cloud_firestore 4.x
+    implementation platform('com.google.firebase:firebase-bom:33.4.0')
+    
+    // Firebase Core (required)
+    implementation 'com.google.firebase:firebase-core'
+    
+    // Firebase Analytics
+    implementation 'com.google.firebase:firebase-analytics-ktx'
+    
+    // Firebase Authentication
+    implementation 'com.google.firebase:firebase-auth-ktx'
+    
+    // Cloud Firestore
+    implementation 'com.google.firebase:firebase-firestore-ktx'
+    
+    // Realtime Database
+    implementation 'com.google.firebase:firebase-database-ktx'
+    
+    // Firebase UI (not needed in Flutter; removed to avoid conflicts)
+    
+    // Firebase UI Auth (removed)
+}
+
+// Apply the Google Services plugin
+apply plugin: 'com.google.gms.google-services'

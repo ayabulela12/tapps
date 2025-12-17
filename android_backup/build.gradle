@@ -1,0 +1,126 @@
+buildscript {
+    ext {
+        // Build tools and plugins
+        kotlin_version = '1.8.10'  // Updated to match Flutter tooling requirements
+        google_services_version = '4.4.1'  // Updated Google Services plugin version
+        agp_version = '7.3.0'  // Compatible with Gradle 7.5
+        
+        // Google Play Services and Firebase versions
+        play_services_version = '18.2.0'
+        play_services_maps_version = '18.2.0'
+        play_services_location_version = '21.0.1'
+        
+        // Firebase versions
+        // Firebase BOM version
+        firebase_bom_version = '32.7.0'  // Matches the version in app/build.gradle
+        
+        // Individual Firebase component versions (for reference, BOM will manage these)
+        firebase_core_version = '21.1.1'
+        firebase_analytics_version = '21.4.0'
+        firebase_auth_version = '22.2.1'
+        firebase_firestore_version = '24.8.1'
+        firebase_database_version = '20.2.2'
+        firebase_messaging_version = '23.3.1'
+    }
+    
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    
+    dependencies {
+        classpath "com.android.tools.build:gradle:$agp_version"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "com.google.gms:google-services:$google_services_version"
+        
+        // Add dependency check plugin
+        classpath 'com.github.ben-manes:gradle-versions-plugin:0.47.0'  // Updated version
+        
+        // Firebase Crashlytics and Performance Monitoring
+        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.9.9'
+        classpath 'com.google.firebase:perf-plugin:1.4.2'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://jitpack.io' }  // For any JitPack dependencies
+    }
+    
+    // Force specific dependency versions across all modules
+    configurations.all {
+        resolutionStrategy {
+            // Force specific versions of Firebase components
+            force "com.google.firebase:firebase-common-ktx:20.4.2"
+            force "com.google.firebase:firebase-components:17.1.5"
+            force "com.google.firebase:firebase-installations:17.2.0"
+            force "com.google.firebase:firebase-installations-interop:17.1.0"
+            // Force specific versions of Play Core libraries
+            force 'com.google.android.play:core:2.0.1'
+            force 'com.google.android.play:core-ktx:2.0.1'
+            force 'com.google.android.play:core-common:2.0.1'
+            force 'com.google.android.play:app-update:2.1.0'
+            force 'com.google.android.play:app-update-ktx:2.1.0'
+            force 'com.google.android.play:review:2.0.1'
+            force 'com.google.android.play:review-ktx:2.0.1'
+            
+            // Force specific versions of other common dependencies
+            force 'androidx.core:core-ktx:1.12.0'
+            force 'androidx.appcompat:appcompat:1.6.1'
+            force 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
+            force 'androidx.activity:activity-compose:1.8.0'
+            
+            // Google Play Services
+            force "com.google.android.gms:play-services-base:$play_services_version"
+            force "com.google.android.gms:play-services-basement:18.2.0"
+            force "com.google.android.gms:play-services-tasks:18.0.2"
+            force "com.google.android.gms:play-services-maps:$play_services_maps_version"
+            force "com.google.android.gms:play-services-location:$play_services_location_version"
+            
+            // Firebase
+            force "com.google.firebase:firebase-common:20.4.2"
+            force "com.google.firebase:firebase-common-ktx:20.4.2"
+            force "com.google.firebase:firebase-core:$firebase_core_version"
+            force "com.google.firebase:firebase-analytics:$firebase_analytics_version"
+            force "com.google.firebase:firebase-analytics-ktx:$firebase_analytics_version"
+            force "com.google.firebase:firebase-firestore:$firebase_firestore_version"
+            force "com.google.firebase:firebase-database:$firebase_database_version"
+            
+            // Exclude conflicting modules
+            exclude group: 'com.google.android.play', module: 'feature-delivery'
+            exclude group: 'com.google.android.play', module: 'feature-delivery-ktx'
+            
+            // Prefer modules that are part of the selected versions
+            preferProjectModules()
+        }
+    }
+}
+
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            android {
+                compileSdkVersion 35
+                defaultConfig {
+                    minSdkVersion 21
+                    targetSdkVersion 34
+                }
+            }
+        }
+    }
+}
+
+rootProject.buildDir = "../build"
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    project.evaluationDependsOn(":app")
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}

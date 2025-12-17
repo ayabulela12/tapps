@@ -1,0 +1,50 @@
+# Android
+android/gradle-wrapper.jar
+android/.gradle/
+android/local.properties
+android/gradle/
+android/app/debug/
+android/app/release/
+android/app/proguard/
+android/captures/
+
+# iOS
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/flutter_assets/
+ios/Flutter/App.framework/
+ios/Flutter/Flutter.framework/
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/app.flx
+ios/Flutter/app.zip
+ios/Flutter/flutter_assets/
+ios/Flutter/flutter_export_environment.sh
+ios/ServiceDefinitions.json
+ios/Runner/GeneratedPluginRegistrant.*
+ios/.generated/
+ios/Podfile.lock
+ios/Pods/
+
+# Flutter
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+flutter_*.png
+*.iml
+.DS_Store
+.dart_tool/
+.idea/
+.vscode/
+
+# Firebase configuration files (contains sensitive API keys)
+**/google-services.json
+android/app/google-services.json
+
+# Keystore files
+**/*.keystore
+**/*.jks
+android/app/**/*.keystore
+android/app/**/*.jks

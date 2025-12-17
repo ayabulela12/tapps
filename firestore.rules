@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Allow public read access to all these collections
+    match /{collection}/{document} {
+      allow read: if collection in [
+        'WCDams', 'ECDams', 'FSDams', 'NCDams',
+        'KZNDams', 'GPDams', 'MPDams', 'LPDams', 'NWDams',
+        'Province', 'Grand_total', 'totals', 'dams',
+        'ECTotals', 'GPTotals', 'KZNTotals', 'LPTotals',
+        'MPTotals', 'NCTotals', 'NWTotals', 'WCTotals',
+        'ECDam', 'FSTotals', 'NelsonMandelaBay', 'NelsonMandelaMetro',
+        'CityOfCapeTown', 'EthekwiniMetro', 'Ekurhuleni'
+      ];
+      allow write: if false;
+    }
+
+    // Keep your existing rules for specific collections
+    match /Province/{document} {
+      allow create: if request.auth != null;
+      allow read: if true;
+      allow write: if request.auth != null;
+      allow delete: if false;
+    }
+  }
+}
