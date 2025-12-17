@@ -1,4 +1,4 @@
-# tapps
+# Tapps
 
 A cross-platform Flutter app (Android, iOS, web, macOS, Linux, Windows) with Firebase integrations and common utilities for maps, geolocation, and media assets.
 
