@@ -19,9 +19,10 @@ import androidx.core.view.WindowInsetsControllerCompat
 class MainActivity: FlutterActivity() {
     private val locationPermissionCode = 1001
     
-    @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Enable edge-to-edge display
+        super.onCreate(savedInstanceState)
+        
+        // Enable edge-to-edge display for all API levels
         WindowCompat.setDecorFitsSystemWindows(window, false)
         
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -29,13 +30,6 @@ class MainActivity: FlutterActivity() {
             val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
             windowInsetsController.systemBarsBehavior =
                 WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            
-            // Hide system bars
-            windowInsetsController.hide(
-                WindowInsetsCompat.Type.systemBars() or
-                WindowInsetsCompat.Type.navigationBars() or
-                WindowInsetsCompat.Type.statusBars()
-            )
             
             // Set light status bar icons
             windowInsetsController.isAppearanceLightStatusBars = true
@@ -49,9 +43,6 @@ class MainActivity: FlutterActivity() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 window.navigationBarDividerColor = android.graphics.Color.TRANSPARENT
             }
-            
-            // Make sure the content isn't drawn behind the system bars
-            WindowCompat.setDecorFitsSystemWindows(window, false)
         } else {
             // For older versions, use the older approach with appropriate flags
             @Suppress("DEPRECATION")
@@ -69,7 +60,6 @@ class MainActivity: FlutterActivity() {
             window.navigationBarColor = android.graphics.Color.TRANSPARENT
         }
         
-        super.onCreate(savedInstanceState)
         requestLocationPermission()
     }
     
@@ -87,3 +77,4 @@ class MainActivity: FlutterActivity() {
         }
     }
 }
+

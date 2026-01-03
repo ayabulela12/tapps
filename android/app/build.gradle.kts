@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -6,8 +9,15 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+// Load keystore properties
+val keystorePropertiesFile = rootProject.file("keys.properties")
+val keystoreProperties = Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+}
+
 android {
-    namespace = "com.appmaniazar.tapp"
+    namespace = "com.tapps.appmaniazar"
     compileSdk = 36
     ndkVersion = "27.0.12077973"  // Updated to match plugin requirements
     
@@ -24,19 +34,33 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.appmaniazar.tapp"
+        applicationId = "com.tapps.appmaniazar"
         minSdk = flutter.minSdkVersion  // Updated to meet Flutter's minimum requirement
-        targetSdk = 34
-        versionCode = 5
-        versionName = "1.0.1"
+        targetSdk = 35
+        versionCode = 8
+        versionName = "5 (1.0.1)"
         multiDexEnabled = true
+    }
+    
+    // Configure 16 KB native library alignment
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
+
+    signingConfigs {
+        create("release") {
+            keyAlias = keystoreProperties.getProperty("keyAlias")
+            keyPassword = keystoreProperties.getProperty("keyPassword")
+            storeFile = file(keystoreProperties.getProperty("storeFile")!!)
+            storePassword = keystoreProperties.getProperty("storePassword")
+        }
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }
