@@ -1,0 +1,179 @@
+COPYRIGHT NOTICES FOR DIFFERENT USE CASES
+==========================================
+
+Created for: Appmaniazar PTY Ltd
+App Name: Tapps
+Year: 2025
+
+
+1. SHORT NOTICE (For About Page, Website Footer, App Description)
+====================================================================
+
+© 2025 Appmaniazar PTY Ltd. All rights reserved.
+
+Tapps and all associated content, code, design, and assets are the exclusive property of Appmaniazar PTY Ltd and may not be copied, modified, distributed, or used without prior written permission.
+
+
+2. GOOGLE PLAY STORE DESCRIPTION (Add at bottom)
+==================================================
+
+Legal Notice
+
+© 2025 Appmaniazar PTY Ltd. All rights reserved.
+
+Tapps, including its name, logo, design, code, and all related assets, is owned and operated by Appmaniazar PTY Ltd. Unauthorized copying, modification, distribution, or resale is strictly prohibited.
+
+For inquiries, please contact Appmaniazar PTY Ltd.
+
+
+3. IN-APP ABOUT/LEGAL SCREEN
+=============================
+
+Copyright
+
+© 2025 Appmaniazar PTY Ltd
+All rights reserved
+
+Tapps Version 5 (1.0.1)
+
+This application and all its content, including but not limited to code, design, graphics, and functionality, are the exclusive property of Appmaniazar PTY Ltd.
+
+Unauthorized use, copying, or distribution is prohibited.
+
+
+4. CODE HEADER (For source files - optional)
+==============================================
+
+/*
+ * Tapps
+ * Copyright (c) 2025 Appmaniazar PTY Ltd. All rights reserved.
+ * 
+ * This file is proprietary and confidential.
+ * Unauthorized copying, modification, or distribution is prohibited.
+ */
+
+
+5. FULL COPYRIGHT NOTICE (For legal documents, terms of service)
+===================================================================
+
+COPYRIGHT NOTICE
+
+© 2025 Appmaniazar PTY Ltd. All rights reserved.
+
+PROPRIETARY SOFTWARE
+
+Tapps (the "Application") is proprietary software owned and operated by Appmaniazar PTY Ltd ("Company", "we", "us", or "our"). All rights, title, and interest in and to the Application, including but not limited to:
+
+- Source code, object code, and executable code
+- User interface design, graphics, and visual elements
+- Branding, logos, trademarks, and service marks
+- Documentation, user guides, and technical specifications
+- All intellectual property rights therein
+
+are and shall remain the exclusive property of Appmaniazar PTY Ltd.
+
+RESTRICTIONS
+
+You may not:
+- Copy, reproduce, or duplicate the Application or any portion thereof
+- Modify, adapt, alter, or create derivative works based on the Application
+- Reverse engineer, decompile, disassemble, or attempt to derive the source code
+- Distribute, sublicense, lease, rent, loan, or otherwise transfer the Application
+- Remove, alter, or obscure any copyright, trademark, or other proprietary notices
+
+without the express written permission of Appmaniazar PTY Ltd.
+
+EXCEPTIONS
+
+The restrictions above do not apply to the extent prohibited by applicable law, including but not limited to fair use, fair dealing, or similar exceptions under copyright law.
+
+CONTACT
+
+For licensing inquiries, partnership opportunities, or legal matters, please contact:
+
+Appmaniazar PTY Ltd
+[Your Address]
+[Your Email]
+[Your Website]
+
+
+6. SIMPLE FOOTER TEXT (For emails, documents)
+==============================================
+
+© 2025 Appmaniazar PTY Ltd. All rights reserved.
+
+
+7. APP STORE METADATA (For iOS App Store if applicable)
+========================================================
+
+Copyright: © 2025 Appmaniazar PTY Ltd
+Seller: Appmaniazar PTY Ltd
+
+
+8. OPEN SOURCE LICENSE ALTERNATIVE (If you want to open source parts)
+=======================================================================
+
+If you decide to open source certain parts while keeping the main app proprietary, you could use:
+
+MIT License (for open source components only)
+
+Copyright (c) 2025 Appmaniazar PTY Ltd
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+NOTE: Only use this if you want to open source specific components. Keep the main app proprietary.
+
+
+9. HUAWEI APP GALLERY SUBMISSION
+=================================
+
+For Huawei AppGallery submission form, use:
+
+Copyright Owner: Appmaniazar PTY Ltd
+Copyright Year: 2025
+
+Copyright Statement:
+© 2025 Appmaniazar PTY Ltd. All rights reserved. Tapps and all associated 
+content are the exclusive property of Appmaniazar PTY Ltd. Unauthorized copying, 
+modification, distribution, or use without prior written permission is prohibited.
+
+Short Version (for app description):
+© 2025 Appmaniazar PTY Ltd. All rights reserved. Tapps is proprietary software 
+owned by Appmaniazar PTY Ltd. Unauthorized copying, modification, or distribution 
+is prohibited.
+
+Note: Huawei AppGallery may also require:
+- Company registration number (if applicable)
+- Business license number (if applicable)
+- Contact email for copyright inquiries
+- Company address
+
+See COPYRIGHT_HUAWEI.txt for complete Huawei submission details.
+
+
+RECOMMENDATIONS
+===============
+
+1. Use notice #1 or #2 for Google Play Store description
+2. Use notice #3 for in-app About/Legal screen
+3. Keep the COPYRIGHT file in your repository
+4. Add copyright header (#4) to key source files if desired
+5. Use notice #5 for Terms of Service or Privacy Policy documents
+6. Use notice #9 for Huawei AppGallery submission
+

@@ -14,6 +14,7 @@ A cross-platform Flutter app (Android, iOS, web, macOS, Linux, Windows) with Fir
 - [Running & Building](#running--building) 🏗️
 - [Testing & Quality](#testing--quality) ✅
 - [Contributing](#contributing) 🤝
+- [Maintenance](#maintenance) 🔧
 - [Troubleshooting](#troubleshooting) ⚠️
 - [License & Contact](#license--contact) 📄
 
@@ -168,6 +169,25 @@ git checkout -b feat/your-feature
 
 ---
 
+## Maintenance
+
+For comprehensive maintenance procedures, update schedules, and critical information for maintaining the Tapps Android app on Google Play Store, see **[MAINTENANCE.md](MAINTENANCE.md)**.
+
+The maintenance guide includes:
+- Critical keys and credentials management
+- Version management procedures
+- Monthly, quarterly, and annual update schedules
+- Pre-release checklists
+- Emergency procedures
+- Monitoring and alert setup
+
+**Quick Maintenance Reminders:**
+- **Monthly:** Check Flutter updates, review Play Console, check analytics (1st of month)
+- **Quarterly:** Update dependencies, review policies, audit security (Jan 1, Apr 1, Jul 1, Oct 1)
+- **Annual:** Full dependency audit, security review, documentation update (January)
+
+---
+
 ## Troubleshooting
 
 - Missing Firebase files: If the app fails to start due to missing Firebase config, download `google-services.json` (Android) and `GoogleService-Info.plist` (iOS) from your Firebase project and place them in the appropriate platform folders.
@@ -187,11 +207,20 @@ flutter pub get
 
 ---
 
-## License & Contact
+## License & Copyright
 
-If there's a preferred license you want to apply, add a `LICENSE` file to the repo. If you'd like, I can add an MIT or Apache 2.0 license for you.
+© 2025 Appmaniazar PTY Ltd. All rights reserved.
 
-Maintainer: Thembela
+This software and all associated assets are proprietary and confidential property of Appmaniazar PTY Ltd. No part of this project may be reproduced, distributed, or transmitted without prior written permission.
+
+For licensing or partnership inquiries, please contact Appmaniazar PTY Ltd.
+
+See [COPYRIGHT](COPYRIGHT) for full copyright notice.
+
+---
+
+**Maintainer:** Thembela  
+**Company:** Appmaniazar PTY Ltd
 
 ---
 

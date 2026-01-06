@@ -1,0 +1,759 @@
+TAPPS MAINTENANCE GUIDE
+
+Last Updated: January 2025
+Current Version: Code 8, Name "5 (1.0.1)"
+Package Name: com.tapps.appmaniazar
+
+This document provides comprehensive maintenance procedures, update schedules, and critical information for maintaining the Tapps Android app on Google Play Store.
+
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+
+1. Critical Keys & Credentials
+2. Version Management
+3. Update Schedule & Checkpoints
+4. Build Configuration Checklist
+5. Pre-Release Checklist
+6. Emergency Procedures
+7. Monitoring & Alerts
+8. Key File Locations Reference
+
+
+================================================================================
+1. CRITICAL KEYS & CREDENTIALS
+================================================================================
+
+KEYSTORE INFORMATION
+
+Location: android/app/Tapps-keystore.jks
+Keys Configuration: android/keys.properties
+Key Alias: Tapps
+Passwords: Stored in keys.properties (currently Tapps2024@)
+
+SECURITY NOTES
+
+CRITICAL: Never commit the following files to git:
+- android/app/Tapps-keystore.jks
+- android/keys.properties
+- android/app/google-services.json
+
+These files are already in .gitignore - verify they remain excluded.
+
+KEYSTORE BACKUP INSTRUCTIONS
+
+1. Create a secure backup of Tapps-keystore.jks:
+   
+   Command:
+   cp android/app/Tapps-keystore.jks ~/secure-backup-location/Tapps-keystore-backup-$(date +%Y%m%d).jks
+
+2. Store backup securely:
+   - Use encrypted storage (password-protected USB drive, cloud storage with encryption)
+   - Store in multiple secure locations
+   - Document backup location in secure password manager
+
+3. Backup keys.properties (store separately from keystore):
+   
+   Command:
+   cp android/keys.properties ~/secure-backup-location/keys.properties.backup
+
+4. If keystore is lost: The app cannot be updated on Google Play. You would need to create a new app listing.
+
+FIREBASE CONFIGURATION
+
+Location: android/app/google-services.json
+Purpose: Firebase services integration (Auth, Firestore, Realtime Database, Analytics)
+Update Frequency: When Firebase project settings change
+
+Note: This file contains sensitive API keys and should never be committed to version control.
+
+PACKAGE INFORMATION
+
+- Package Name: com.tapps.appmaniazar
+- Application ID: com.tapps.appmaniazar
+- Namespace: com.tapps.appmaniazar
+- Current Version Code: 8
+- Current Version Name: "5 (1.0.1)"
+
+
+================================================================================
+2. VERSION MANAGEMENT
+================================================================================
+
+VERSION CONFIGURATION LOCATIONS
+
+Version information must be updated in TWO places:
+
+1. android/app/build.gradle.kts (lines 40-41):
+   
+   versionCode = 8
+   versionName = "5 (1.0.1)"
+
+2. pubspec.yaml (line 19):
+   
+   version: 1.0.1+8
+   
+   Format: versionName+buildNumber (e.g., 1.0.1+8 means version name 1.0.1 and build number 8)
+
+VERSION CODE RULES
+
+- Never reuse a version code - each release must increment
+- Version codes must be integers (1, 2, 3, ...)
+- Google Play rejects uploads with duplicate version codes
+- Version codes can only increase, never decrease
+
+VERSION NAME FORMAT
+
+Current format: "X (1.0.1)" where:
+- X = Release number (increments with major releases)
+- 1.0.1 = Semantic version (major.minor.patch)
+
+Example progression:
+- "4 (1.0.1)" → "5 (1.0.1)" → "6 (1.0.1)" (major releases)
+- Or: "5 (1.0.1)" → "5 (1.0.2)" → "5 (1.1.0)" (semantic versioning)
+
+
+================================================================================
+3. UPDATE SCHEDULE & CHECKPOINTS
+================================================================================
+
+MONTHLY CHECKS (1st of each month)
+
+Perform these checks on the first of every month:
+
+□ Check Flutter SDK version:
+  
+  Command:
+  flutter --version
+  
+  Note current version and check for updates
+
+□ Review dependency updates:
+  
+  Command:
+  flutter pub outdated
+  
+  Review available updates but don't auto-update (do this quarterly)
+
+□ Check Google Play Console:
+  - Log into Google Play Console (https://play.google.com/console)
+  - Review any warnings or notifications
+  - Check app status and policy compliance
+  - Review user reviews and ratings
+
+□ Review app analytics and crash reports:
+  - Check Firebase Analytics for user trends
+  - Review crash reports in Firebase Crashlytics (if enabled)
+  - Monitor app performance metrics
+
+□ Check Firebase console:
+  - Verify Firebase services are operational
+  - Review Firebase project quotas and usage
+  - Check for any service alerts or deprecations
+
+Set a calendar reminder: "Tapps Monthly Maintenance - 1st of month"
+
+QUARTERLY CHECKS (Jan 1, Apr 1, Jul 1, Oct 1)
+
+Perform comprehensive updates quarterly:
+
+□ Update Flutter SDK (if stable release available):
+  
+  Commands:
+  flutter upgrade
+  flutter --version  (Verify update)
+
+□ Review and update dependencies:
+  
+  Commands:
+  flutter pub outdated
+  flutter pub upgrade  (Update compatible packages)
+  
+  Test thoroughly after dependency updates
+
+□ Check Android Gradle Plugin compatibility:
+  - Review android/settings.gradle.kts for AGP version
+  - Check compatibility with current Flutter version
+  - Update if necessary (test builds after update)
+
+□ Review Google Play policy changes:
+  - Check Google Play Policy Center (https://play.google.com/about/developer-content-policy/)
+  - Review any new requirements or deprecations
+  - Ensure app compliance with latest policies
+
+□ Audit security dependencies:
+  
+  Command:
+  flutter pub outdated --security
+  
+  Prioritize security updates
+
+□ Review targetSdk requirements:
+  - Current requirement: targetSdk 35 (as of Jan 2025)
+  - Check Google Play Console for upcoming requirements
+  - Plan updates 2-3 months before deadline
+
+Set calendar reminders: "Tapps Quarterly Maintenance - Jan 1, Apr 1, Jul 1, Oct 1"
+
+GOOGLE PLAY STORE REQUIREMENTS (Critical Dates)
+
+Target SDK Updates
+
+- Current Requirement: targetSdk 35 (as of Jan 2025)
+- Next Expected Requirement: targetSdk 36 (typically announced 6 months in advance)
+- Check Frequency: Monthly via Google Play Console announcements
+- Update Timeline: Update 2-3 months before deadline to allow testing
+
+How to check:
+1. Log into Google Play Console
+2. Navigate to Policy → App content
+3. Check "Target API level" section for requirements
+4. Monitor email notifications from Google Play
+
+16KB Page Size Alignment
+
+- Status: Already implemented
+- Configuration: android/app/build.gradle.kts (lines 46-49)
+  
+  packaging {
+      jniLibs {
+          useLegacyPackaging = false
+      }
+  }
+  
+- Monitor: Check quarterly for new requirements or changes
+
+Edge-to-Edge Display
+
+- Status: Already implemented
+- Configuration: android/app/src/main/kotlin/com/tapps/appmaniazar/MainActivity.kt
+- Monitor: Check for API deprecations quarterly
+
+Security Updates
+
+- Check Frequency: Quarterly
+- Sources:
+  - Google Play Security Bulletins
+  - Android Security Advisories
+  - Flutter Security Advisories
+
+ANNUAL MAINTENANCE (January)
+
+Perform comprehensive annual review:
+
+□ Full dependency audit and major version updates:
+  
+  Command:
+  flutter pub outdated
+  
+  Review breaking changes for major version updates
+  Plan migration strategy for major updates
+
+□ Review and update signing keys if needed:
+  - Check keystore expiration (if applicable)
+  - Verify backup integrity
+  - Consider key rotation if security concerns arise
+
+□ Archive old build artifacts:
+  - Clean up old APK/AAB files
+  - Archive release notes and changelogs
+  - Document version history
+
+□ Review and update documentation:
+  - Update this maintenance guide
+  - Review README.md for accuracy
+  - Update any outdated procedures
+
+□ Security audit of all credentials:
+  - Rotate passwords if needed
+  - Verify backup security
+  - Review access permissions
+
+Set calendar reminder: "Tapps Annual Maintenance - January 1"
+
+
+================================================================================
+4. BUILD CONFIGURATION CHECKLIST
+================================================================================
+
+CURRENT CONFIGURATIONS
+
+Maintain these configurations in android/app/build.gradle.kts:
+
+Configuration: compileSdk
+Current Value: 36
+Location: Line 21
+Notes: Keep updated with latest Android SDK
+
+Configuration: targetSdk
+Current Value: 35
+Location: Line 39
+Notes: Must match Google Play requirements
+
+Configuration: minSdk
+Current Value: flutter.minSdkVersion
+Location: Line 38
+Notes: Flutter default (typically 21)
+
+Configuration: namespace
+Current Value: com.tapps.appmaniazar
+Location: Line 20
+Notes: Package identifier
+
+Configuration: applicationId
+Current Value: com.tapps.appmaniazar
+Location: Line 37
+Notes: Must match package name
+
+Configuration: versionCode
+Current Value: 8
+Location: Line 40
+Notes: Increment for each release
+
+Configuration: versionName
+Current Value: "5 (1.0.1)"
+Location: Line 41
+Notes: User-facing version
+
+Configuration: Signing Config
+Current Value: release
+Location: Lines 52-59
+Notes: Uses keys.properties
+
+Configuration: 16KB Alignment
+Current Value: Enabled
+Location: Lines 46-49
+Notes: Required for Google Play
+
+SIGNING CONFIGURATION
+
+Release builds are signed using:
+- Keystore: android/app/Tapps-keystore.jks
+- Config File: android/keys.properties
+- Build Type: release (line 62-64)
+
+Verify signing is configured correctly:
+
+Commands:
+# Check if release build is signed
+flutter build appbundle --release
+# Verify with: jarsigner -verify -verbose -certs app-release.aab
+
+16KB PAGE SIZE ALIGNMENT
+
+Status: Configured
+Location: android/app/build.gradle.kts lines 46-49
+
+packaging {
+    jniLibs {
+        useLegacyPackaging = false
+    }
+}
+
+Verification: Google Play Console will validate during upload.
+
+
+================================================================================
+5. PRE-RELEASE CHECKLIST
+================================================================================
+
+Before uploading a new version to Google Play, complete all items:
+
+VERSION UPDATES
+
+□ Increment version code (never reuse):
+  - Update android/app/build.gradle.kts line 40
+  - Update pubspec.yaml line 19
+  - Verify both match
+
+□ Update version name if needed:
+  - Update android/app/build.gradle.kts line 41
+  - Follow version naming convention
+
+□ Verify version consistency:
+  
+  Commands:
+  # Check build.gradle.kts
+  grep "versionCode\|versionName" android/app/build.gradle.kts
+  
+  # Check pubspec.yaml
+  grep "version:" pubspec.yaml
+
+BUILD VERIFICATION
+
+□ Verify signing configuration:
+  - Confirm keys.properties exists and is readable
+  - Verify keystore file exists: android/app/Tapps-keystore.jks
+  - Test signing config loads correctly
+
+□ Test release build:
+  
+  Commands:
+  flutter clean
+  flutter pub get
+  flutter build appbundle --release
+
+□ Verify bundle:
+  - Use Play Console internal testing track, OR
+  - Use bundletool to verify:
+    
+    Command:
+    bundletool build-apks --bundle=build/app/outputs/bundle/release/app-release.aab --output=app.apks
+
+CODE QUALITY CHECKS
+
+□ Check for lint errors:
+  
+  Command:
+  flutter analyze
+  
+  Fix all errors, review warnings
+
+□ Run tests:
+  
+  Command:
+  flutter test
+  
+  Ensure all tests pass
+
+□ Format code:
+  
+  Command:
+  dart format .
+
+FEATURE VERIFICATION
+
+□ Verify edge-to-edge display works:
+  - Test on physical devices (various Android versions)
+  - Verify system bars are transparent
+  - Check content doesn't overlap system UI
+
+□ Check 16KB alignment compliance:
+  - Google Play Console validates automatically
+  - Review any warnings in Play Console
+
+GOOGLE PLAY CONSOLE
+
+□ Review pre-submission checklist:
+  - App content rating
+  - Privacy policy (if required)
+  - Target audience
+  - Content guidelines compliance
+
+□ Prepare release notes:
+  - Write clear, user-friendly release notes
+  - Highlight new features and bug fixes
+  - Keep notes concise
+
+□ Select release track:
+  - Internal testing (for initial verification)
+  - Closed testing (for beta testing)
+  - Open testing (for public beta)
+  - Production (for public release)
+
+POST-UPLOAD VERIFICATION
+
+□ Monitor Google Play Console:
+  - Check for processing errors
+  - Review pre-launch report
+  - Verify app bundle is accepted
+
+□ Test on internal testing track:
+  - Install from Play Store (internal testing)
+  - Verify app functionality
+  - Check version number displays correctly
+
+
+================================================================================
+6. EMERGENCY PROCEDURES
+================================================================================
+
+LOST KEYSTORE
+
+If keystore file is lost:
+
+1. Check backups immediately:
+   - Review secure backup locations
+   - Check password manager for backup notes
+
+2. If backup exists:
+   - Restore keystore file to android/app/Tapps-keystore.jks
+   - Verify keys.properties matches backup
+   - Test build with restored keystore
+
+3. If no backup exists:
+   - CRITICAL: You cannot update the existing app on Google Play
+   - Options:
+     - Create new app listing with new package name
+     - Contact Google Play Support (low success rate for recovery)
+   - Prevention: Always maintain secure backups
+
+BUILD FAILURES
+
+Common build issues and solutions:
+
+1. Gradle sync errors:
+   
+   Commands:
+   cd android
+   ./gradlew clean
+   cd ..
+   flutter clean
+   flutter pub get
+
+2. Kotlin compilation errors:
+   - Check android/app/build.gradle.kts for syntax errors
+   - Verify Kotlin version compatibility
+   - Review MainActivity.kt for errors
+
+3. Signing errors:
+   - Verify keys.properties exists and is readable
+   - Check keystore file path is correct
+   - Verify passwords match keystore
+
+4. Dependency conflicts:
+   
+   Commands:
+   flutter pub get
+   flutter pub upgrade
+   # If issues persist, check pubspec.lock
+
+5. "No space left on device":
+   - Clean build artifacts:
+     
+     Commands:
+     flutter clean
+     rm -rf build/
+   - Free up disk space
+   - Check Gradle cache: ~/.gradle/caches/
+
+GOOGLE PLAY REJECTION
+
+If app is rejected:
+
+1. Review rejection reason:
+   - Check Google Play Console → Policy → App content
+   - Read rejection email carefully
+   - Note specific policy violation
+
+2. Common rejection reasons:
+   - Target SDK too low (update targetSdk)
+   - Policy violation (review content)
+   - Security issues (update dependencies)
+   - Misleading content (update app description)
+
+3. Appeal process:
+   - Fix the issue
+   - Update app and resubmit
+   - Use Play Console appeal form if rejection seems incorrect
+   - Provide detailed explanation
+
+4. Prevention:
+   - Review Google Play policies before submission
+   - Use pre-launch report to catch issues early
+   - Test on internal testing track first
+
+SECURITY INCIDENT
+
+If credentials are compromised:
+
+1. Immediate actions:
+   - Rotate Firebase API keys in Firebase Console
+   - Update google-services.json if compromised
+   - Review access logs in Firebase Console
+
+2. If keystore is compromised:
+   - CRITICAL decision required:
+     - Option A: Create new app with new package name
+     - Option B: If keystore not publicly exposed, monitor for abuse
+   - Contact Google Play Support immediately
+
+3. Prevention:
+   - Never commit credentials to git
+   - Use secure password manager
+   - Limit access to credentials
+   - Regular security audits
+
+
+================================================================================
+7. MONITORING & ALERTS
+================================================================================
+
+GOOGLE PLAY CONSOLE NOTIFICATIONS
+
+Set up email notifications:
+
+1. Log into Google Play Console (https://play.google.com/console)
+2. Navigate to Settings → Email preferences
+3. Enable notifications for:
+   - Policy updates
+   - App status changes
+   - User reviews
+   - Revenue reports
+   - Security alerts
+
+FIREBASE MONITORING
+
+If Firebase Crashlytics is enabled:
+
+- Monitor crash reports weekly
+- Set up alerts for critical crashes
+- Review Firebase Analytics monthly
+- Check Firebase Console for service status
+
+APP PERFORMANCE METRICS
+
+Track monthly:
+
+- User acquisition and retention
+- App ratings and reviews
+- Crash-free user percentage
+- ANR (Application Not Responding) rate
+- Revenue metrics (if applicable)
+
+CALENDAR REMINDERS
+
+Set up recurring reminders:
+
+- Monthly: 1st of each month - Monthly maintenance checklist
+- Quarterly: Jan 1, Apr 1, Jul 1, Oct 1 - Quarterly updates
+- Annual: January 1 - Annual comprehensive review
+- Google Play: Check for targetSdk announcements monthly
+
+Recommended calendar entries:
+
+Monthly: "Tapps Maintenance - Check Flutter updates, Play Console, Analytics"
+Quarterly: "Tapps Quarterly Update - Update dependencies, review policies"
+Annual: "Tapps Annual Review - Full audit and documentation update"
+
+
+================================================================================
+8. KEY FILE LOCATIONS REFERENCE
+================================================================================
+
+Quick reference table of all critical files:
+
+File/Directory: Build Configuration
+Path: android/app/build.gradle.kts
+Purpose: Android build settings, version, signing
+Update Frequency: Every release
+
+File/Directory: Android Manifest
+Path: android/app/src/main/AndroidManifest.xml
+Purpose: App permissions, activities, metadata
+Update Frequency: As needed
+
+File/Directory: MainActivity
+Path: android/app/src/main/kotlin/com/tapps/appmaniazar/MainActivity.kt
+Purpose: Main activity, edge-to-edge config
+Update Frequency: As needed
+
+File/Directory: Keystore
+Path: android/app/Tapps-keystore.jks
+Purpose: App signing key
+Update Frequency: Backup regularly
+
+File/Directory: Keys Config
+Path: android/keys.properties
+Purpose: Keystore credentials
+Update Frequency: Backup regularly
+
+File/Directory: Firebase Config
+Path: android/app/google-services.json
+Purpose: Firebase services
+Update Frequency: When Firebase changes
+
+File/Directory: Dependencies
+Path: pubspec.yaml
+Purpose: Flutter dependencies
+Update Frequency: Quarterly
+
+File/Directory: Version Info
+Path: pubspec.yaml (line 19)
+Purpose: Flutter version
+Update Frequency: Every release
+
+File/Directory: Gradle Properties
+Path: android/gradle.properties
+Purpose: Gradle settings
+Update Frequency: Rarely
+
+File/Directory: Settings
+Path: android/settings.gradle.kts
+Purpose: Gradle project settings
+Update Frequency: Rarely
+
+IMPORTANT DIRECTORIES
+
+- Source Code: lib/ - Main application code
+- Assets: assets/ - Images, fonts, animations
+- Tests: test/ - Unit and widget tests
+- Build Output: build/ - Generated build files (can be deleted)
+
+
+================================================================================
+ADDITIONAL RESOURCES
+================================================================================
+
+OFFICIAL DOCUMENTATION
+
+- Flutter Documentation: https://docs.flutter.dev/
+- Android Developer Guide: https://developer.android.com/
+- Google Play Console Help: https://support.google.com/googleplay/android-developer/
+- Firebase Documentation: https://firebase.google.com/docs
+
+USEFUL COMMANDS REFERENCE
+
+# Check Flutter version
+flutter --version
+
+# Check for dependency updates
+flutter pub outdated
+
+# Update dependencies
+flutter pub upgrade
+
+# Clean build
+flutter clean
+flutter pub get
+
+# Build release bundle
+flutter build appbundle --release
+
+# Run tests
+flutter test
+
+# Analyze code
+flutter analyze
+
+# Format code
+dart format .
+
+
+================================================================================
+MAINTENANCE LOG
+================================================================================
+
+Use this section to track maintenance activities:
+
+Date: 2025-01-04
+Activity: Initial maintenance guide created
+Version: 8
+Notes: Documented all procedures
+
+Date: 
+Activity: 
+Version: 
+Notes: 
+
+Date: 
+Activity: 
+Version: 
+Notes: 
+
+
+================================================================================
+
+Remember: Regular maintenance prevents issues and ensures your app stays compliant with Google Play requirements. Set calendar reminders and stick to the schedule!
+

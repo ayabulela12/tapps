@@ -1,0 +1,119 @@
+HUAWEI APP GALLERY - COPYRIGHT INFORMATION
+==========================================
+
+For use in Huawei AppGallery submission and app listing.
+
+================================================================================
+COPYRIGHT OWNER INFORMATION
+================================================================================
+
+Copyright Owner: Appmaniazar PTY Ltd
+Copyright Year: 2025
+App Name: Tapps
+Package Name: com.tapps.appmaniazar
+Version: 5 (1.0.1)
+
+================================================================================
+COPYRIGHT STATEMENT (For Huawei AppGallery Submission)
+================================================================================
+
+© 2025 Appmaniazar PTY Ltd. All rights reserved.
+
+Tapps and all associated content, including but not limited to:
+- Application source code and compiled binaries
+- User interface design, graphics, and visual elements
+- Branding, logos, trademarks, and service marks
+- Documentation and user guides
+- All intellectual property contained in the application
+
+are the exclusive property of Appmaniazar PTY Ltd.
+
+This application is proprietary software. Unauthorized copying, modification, 
+distribution, reverse engineering, or any other form of unauthorized use is 
+strictly prohibited without the express written permission of Appmaniazar PTY Ltd.
+
+All rights reserved.
+
+================================================================================
+SHORT VERSION (For App Description Field)
+================================================================================
+
+© 2025 Appmaniazar PTY Ltd. All rights reserved.
+
+Tapps is proprietary software owned by Appmaniazar PTY Ltd. Unauthorized copying, 
+modification, or distribution is prohibited.
+
+================================================================================
+COPYRIGHT NOTICE (For App Details Page)
+================================================================================
+
+Copyright Information
+
+Owner: Appmaniazar PTY Ltd
+Copyright Year: 2025
+All Rights Reserved
+
+This application and all its content, including code, design, graphics, and 
+functionality, are the exclusive property of Appmaniazar PTY Ltd. Unauthorized 
+use, copying, or distribution is strictly prohibited.
+
+For licensing inquiries, please contact Appmaniazar PTY Ltd.
+
+================================================================================
+FOR HUAWEI APP GALLERY SUBMISSION FORM
+================================================================================
+
+When filling out the Huawei AppGallery submission form, use the following:
+
+COPYRIGHT OWNER NAME:
+Appmaniazar PTY Ltd
+
+COPYRIGHT STATEMENT:
+© 2025 Appmaniazar PTY Ltd. All rights reserved. Tapps and all associated 
+content are the exclusive property of Appmaniazar PTY Ltd. Unauthorized copying, 
+modification, distribution, or use without prior written permission is prohibited.
+
+COPYRIGHT YEAR:
+2025
+
+================================================================================
+ADDITIONAL INFORMATION FOR HUAWEI SUBMISSION
+================================================================================
+
+If Huawei AppGallery requires additional copyright details, you may need to provide:
+
+1. Company Registration Number (if applicable)
+2. Business License Number (if applicable)
+3. Contact Email for Copyright Inquiries
+4. Company Address
+5. Website URL (if applicable)
+
+Note: Fill in these details as required by Huawei's submission process.
+
+================================================================================
+LEGAL COMPLIANCE
+================================================================================
+
+This copyright notice complies with:
+- International copyright laws
+- Huawei AppGallery terms and conditions
+- Intellectual property protection requirements
+- Software licensing standards
+
+The copyright owner (Appmaniazar PTY Ltd) has the legal right to distribute 
+this application and grant Huawei AppGallery permission to distribute it through 
+their platform.
+
+================================================================================
+CONTACT INFORMATION (Fill in as needed)
+================================================================================
+
+For copyright inquiries or legal matters related to this application:
+
+Company: Appmaniazar PTY Ltd
+Contact: [Your Contact Email]
+Address: [Your Company Address]
+Website: [Your Website URL - if applicable]
+
+================================================================================
+
