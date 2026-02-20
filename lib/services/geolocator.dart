@@ -19,66 +19,46 @@ Future<Position> getLocation({bool forceRefresh = true}) async {
         latitude: fallbackLatitude,
         longitude: fallbackLongitude,
         timestamp: DateTime.now(),
-        accuracy: 0,
-        altitude: 0,
-        altitudeAccuracy: 0,
-        heading: 0,
-        headingAccuracy: 0,
-        speed: 0,
-        speedAccuracy: 0,
+        accuracy: 0.0,
+        altitude: 0.0,
+        altitudeAccuracy: 0.0,
+        heading: 0.0,
+        headingAccuracy: 0.0,
+        speed: 0.0,
+        speedAccuracy: 0.0,
       );
     }
 
-    // Check and request permission
-    var permission = await Geolocator.checkPermission();
+    // Check location permissions
+    LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        logger.w('Location permission denied; using fallback coordinates');
+        return Position(
+          latitude: fallbackLatitude,
+          longitude: fallbackLongitude,
+          timestamp: DateTime.now(),
+          accuracy: 0.0,
+          altitude: 0.0,
+          altitudeAccuracy: 0.0,
+          heading: 0.0,
+          headingAccuracy: 0.0,
+          speed: 0.0,
+          speedAccuracy: 0.0,
+        );
+      }
     }
 
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
-      logger.w('Location permission denied; using fallback coordinates');
-      return Position(
-        latitude: fallbackLatitude,
-        longitude: fallbackLongitude,
-        timestamp: DateTime.now(),
-        accuracy: 0,
-        altitude: 0,
-        altitudeAccuracy: 0,
-        heading: 0,
-        headingAccuracy: 0,
-        speed: 0,
-        speedAccuracy: 0,
-      );
-    }
-
-    // Get current position with best accuracy and force fresh location
+    // Get current position with high accuracy
     final position = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.best, // Use best accuracy for exact location
-      timeLimit: const Duration(seconds: 20), // Increased timeout for better accuracy
-      forceAndroidLocationManager: false, // Use FusedLocationProviderClient (more accurate)
+      forceAndroidLocationManager: false,
+      timeLimit: const Duration(seconds: 30),
     );
 
-    // Log the actual coordinates being used
-    logger.i('📍 Location obtained: lat=${position.latitude}, lon=${position.longitude}, accuracy=${position.accuracy}m, timestamp=${position.timestamp}');
-
-    // Validate that we got a reasonable location (not 0,0 or fallback)
-    if (position.latitude == 0.0 && position.longitude == 0.0) {
-      logger.w('Received invalid coordinates (0,0); using fallback');
-      return Position(
-        latitude: fallbackLatitude,
-        longitude: fallbackLongitude,
-        timestamp: DateTime.now(),
-        accuracy: 0,
-        altitude: 0,
-        altitudeAccuracy: 0,
-        heading: 0,
-        headingAccuracy: 0,
-        speed: 0,
-        speedAccuracy: 0,
-      );
-    }
-
+    logger.i('✅ Location obtained: Lat=${position.latitude}, Lon=${position.longitude}');
     return position;
   } catch (e, stack) {
     logger.e('Error getting location; using fallback', error: e, stackTrace: stack);

@@ -1,21 +1,19 @@
+import 'package:appmaniazar/constants/text_styles.dart';
+import 'package:appmaniazar/extensions/datetime.dart';
+import 'package:appmaniazar/providers/current_weather_provider.dart';
+import 'package:appmaniazar/screens/weather_locations_screen.dart';
+import 'package:appmaniazar/utils/get_weather_icons.dart';
+import 'package:appmaniazar/views/gradient_container.dart';
+import 'package:appmaniazar/views/hourly_forecast.dart';
+import 'package:appmaniazar/views/weather_info.dart';
+import 'package:appmaniazar/views/weather_skeleton.dart';
+import 'package:appmaniazar/views/weather_tips.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:logger/logger.dart';
-import 'package:appmaniazar/constants/text_styles.dart';
-import 'package:appmaniazar/extensions/datetime.dart';
-import 'package:appmaniazar/providers/current_weather_provider.dart';
-import 'package:appmaniazar/views/gradient_container.dart';
-import 'package:appmaniazar/views/hourly_forecast.dart';
-import 'package:appmaniazar/views/location_search.dart';
-import 'package:appmaniazar/views/weather_info.dart';
-import 'package:appmaniazar/views/weather_skeleton.dart';
-import 'package:appmaniazar/views/weather_tips.dart';
-import 'package:appmaniazar/utils/get_weather_icons.dart';
-
-final selectedLocationProvider = StateProvider<String?>((ref) => null);
-final selectedCoordinatesProvider = StateProvider<({double lat, double lon})?>((ref) => null);
+import 'package:shared_preferences/shared_preferences.dart';
 
 class WeatherScreen extends ConsumerStatefulWidget {
   const WeatherScreen({super.key});
@@ -24,13 +22,119 @@ class WeatherScreen extends ConsumerStatefulWidget {
   ConsumerState<WeatherScreen> createState() => _WeatherScreenState();
 }
 
-class _WeatherScreenState extends ConsumerState<WeatherScreen> {
+class _WeatherScreenState extends ConsumerState<WeatherScreen>
+    with WidgetsBindingObserver {
   final logger = Logger();
+  bool _isGenericLocationName(String name) {
+    final lower = name.toLowerCase().trim();
+    return lower.isEmpty ||
+        lower.startsWith('city of ') ||
+        lower.contains('metro') ||
+        lower.contains('metropolitan') ||
+        lower.contains('municipality') ||
+        lower.contains('district') ||
+        lower.contains('county') ||
+        lower.contains('province') ||
+        lower.contains('region');
+  }
+
+  void _openLocationSearch() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const WeatherLocationsScreen(),
+      ),
+    );
+  }
 
   @override
   void initState() {
     super.initState();
-    _checkLocationPermission();
+    WidgetsBinding.instance.addObserver(this);
+    // Ask for location permission with a user-facing explanation
+    // when the screen first appears.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _maybeAskForLocationPermission();
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // When the app comes back to the foreground, refresh the
+    // current-location weather and name if we're in "device mode"
+    // (i.e. no manual city card is selected).
+    if (state == AppLifecycleState.resumed) {
+      final selectedCoords = ref.read(selectedCoordinatesProvider);
+      if (selectedCoords == null) {
+        logger.i('🔄 App resumed; refreshing current location weather + name');
+        // Kick off refreshes without caring about the returned value.
+        // Using underscores avoids the "unused value" lint.
+        final _ = ref.refresh(currentWeatherProvider);
+        final __ = ref.refresh(currentLocationNameProvider);
+      }
+    }
+  }
+
+  Future<void> _maybeAskForLocationPermission() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final hasAsked =
+          prefs.getBool('has_asked_location_permission_v1') ?? false;
+
+      // If we've already asked before, just ensure permission is still OK
+      // and log if it isn't.
+      if (hasAsked) {
+        await _checkLocationPermission();
+        return;
+      }
+
+      if (!mounted) return;
+
+      // Show an explanatory dialog before the system permission prompt.
+      final shouldRequest = await showDialog<bool>(
+        context: context,
+        barrierDismissible: true,
+        builder: (ctx) {
+          return AlertDialog(
+            title: const Text('Use your location?'),
+            content: const Text(
+              'We use your device location to show precise weather for where you are right now. '
+              'You can always choose a city manually later.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop(false);
+                },
+                child: const Text('Not now'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop(true);
+                },
+                child: const Text('Allow'),
+              ),
+            ],
+          );
+        },
+      );
+
+      // Remember that we've shown the dialog, regardless of the choice,
+      // so we don't keep nagging on every launch.
+      await prefs.setBool('has_asked_location_permission_v1', true);
+
+      if (shouldRequest == true) {
+        await _checkLocationPermission();
+      }
+    } catch (e) {
+      logger.e('Error showing location permission prompt: $e');
+    }
   }
 
   Future<void> _checkLocationPermission() async {
@@ -51,20 +155,6 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
       }
     } catch (e) {
       logger.e('Error checking location permission: $e');
-    }
-  }
-
-  void _onLocationSelected(WidgetRef ref, String location) async {
-    try {
-      final placesService = ref.read(placesServiceProvider);
-      final coordinates = await placesService.getLocationFromAddress(location);
-      ref.read(selectedLocationProvider.notifier).state = location;
-      ref.read(selectedCoordinatesProvider.notifier).state = (
-        lat: coordinates.lat,
-        lon: coordinates.lon,
-      );
-    } catch (e) {
-      logger.e('Error getting location coordinates: $e');
     }
   }
   @override
@@ -92,109 +182,158 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
       body: weatherData.when(
         data: (weather) {
           try {
+            Widget buildLocationText() {
+              // Show exact location name from reverse geocoding, or selected location, or weather API name
+              if (selectedLocation != null) {
+                return Text(
+                  selectedLocation,
+                  style: TextStyles.h1,
+                  overflow: TextOverflow.ellipsis,
+                );
+              }
+
+              if (locationNameAsync != null) {
+                return locationNameAsync.when(
+                  data: (name) {
+                    // Only use reverse geocoded name if it's not "Unknown Location"
+                    final displayName = (name != 'Unknown Location' &&
+                            name.isNotEmpty &&
+                            !_isGenericLocationName(name))
+                        ? name
+                        : weather.name;
+                    return Text(
+                      displayName,
+                      style: TextStyles.h1,
+                      overflow: TextOverflow.ellipsis,
+                    );
+                  },
+                  loading: () => Text(
+                    weather.name,
+                    style: TextStyles.h1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  error: (_, __) => Text(
+                    weather.name,
+                    style: TextStyles.h1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                );
+              }
+
+              return Text(
+                weather.name,
+                style: TextStyles.h1,
+                overflow: TextOverflow.ellipsis,
+              );
+            }
+
             return GradientContainer(
               child: SafeArea(
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 16),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                child: Column(
+                  children: [
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
                         children: [
-                          // Show exact location name from reverse geocoding, or selected location, or weather API name
-                          selectedLocation != null
-                              ? Text(
-                                  selectedLocation!,
-                                  style: TextStyles.h1,
-                                  textAlign: TextAlign.center,
-                                )
-                              : locationNameAsync != null
-                                  ? locationNameAsync.when(
-                                      data: (name) {
-                                        // Only use reverse geocoded name if it's not "Unknown Location"
-                                        final displayName = (name != 'Unknown Location' && name.isNotEmpty)
-                                            ? name
-                                            : weather.name;
-                                        return Text(
-                                          displayName,
-                                          style: TextStyles.h1,
-                                          textAlign: TextAlign.center,
-                                        );
-                                      },
-                                      loading: () => Text(
-                                        weather.name,
-                                        style: TextStyles.h1,
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      error: (_, __) => Text(
-                                        weather.name,
-                                        style: TextStyles.h1,
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    )
-                                  : Text(
-                                      weather.name,
-                                      style: TextStyles.h1,
-                                      textAlign: TextAlign.center,
-                                    ),
-                          const SizedBox(height: 8),
-                          Text(
-                            DateTime.now().dateTime,
-                            style: TextStyles.subtitleText,
+                          const Icon(
+                            Icons.location_on,
+                            color: Colors.white,
                           ),
-                          const SizedBox(height: 10),
-                          SizedBox(
-                            height: 160,
-                            child: Image.asset(
-                              getWeatherIcon(weatherCode: weather.id),
-                              width: 140,
-                              height: 140,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) => const Icon(
-                                Icons.cloud,
-                                size: 80,
-                                color: Colors.white,
-                              ),
+                          const SizedBox(width: 8),
+                          Expanded(child: buildLocationText()),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.search,
+                              color: Colors.white,
                             ),
-                          ),
-                          Text(
-                            weather.weather.first.description,
-                            style: TextStyles.h3,
-                            textAlign: TextAlign.center,
+                            onPressed: _openLocationSearch,
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
-                      WeatherInfo(weather: weather),
-                      const SizedBox(height: 10),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      DateTime.now().dateTime,
+                      style: TextStyles.subtitleText,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 120,
+                      child: Image.asset(
+                        getWeatherIcon(weatherCode: weather.weather.first.id),
+                        width: 100,
+                        height: 100,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(
+                          Icons.cloud,
+                          size: 72,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${weather.temperature.toStringAsFixed(0)}°',
+                      style: TextStyles.h1.copyWith(
+                        fontSize: 64,
+                        fontWeight: FontWeight.w200,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      weather.weather.first.description,
+                      style: TextStyles.h3.copyWith(
+                        fontSize: 18,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'H:${weather.main.tempMax.toStringAsFixed(0)}°  L:${weather.main.tempMin.toStringAsFixed(0)}°',
+                      style: TextStyles.subtitleText,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.2),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Today', style: TextStyles.h2),
-                            TextButton(
-                              onPressed: () {},
-                              child: const Text(
-                                'Next 7 Days >',
-                                style: TextStyles.buttonText,
-                              ),
+                            Text(
+                              weather.windSpeed > 20
+                                  ? 'Windy conditions expected today. Gusts up to ${weather.windSpeed.toStringAsFixed(1)} km/h.'
+                                  : 'Comfortable conditions today with light winds around ${weather.windSpeed.toStringAsFixed(1)} km/h.',
+                              style: TextStyles.bodyText,
                             ),
+                            const SizedBox(height: 12),
+                            const HourlyForecast(),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      const HourlyForecast(),
-                      const SizedBox(height: 16),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        child: WeatherTips(),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 16),
+                    WeatherInfo(weather: weather),
+                    const SizedBox(height: 16),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: WeatherTips(),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                 ),
               ),
             );

@@ -1,15 +1,24 @@
+import 'dart:math' as math;
+
+import 'package:appmaniazar/utils/logging.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:appmaniazar/utils/logging.dart';
-import 'dart:math' as math;
 
 class PlacesService {
   static const String _baseUrl = 'https://maps.googleapis.com/maps/api/place';
   static const String _apiKey = 'AIzaSyB8mhR3UIV8vlu2wLpVbNDILNvTA_TjKCw';
 
-  final Dio _dio = Dio();
+  // NOTE: Nominatim requires a valid User-Agent; without it requests can be rejected.
+  final Dio _dio = Dio(
+    BaseOptions(
+      headers: const {
+        'User-Agent': 'AppManiazarWeatherApp/1.0',
+        'Accept': 'application/json',
+      },
+    ),
+  );
 
   Future<List<PlaceSearchResult>> searchPlaces(String query) async {
     try {
@@ -18,7 +27,13 @@ class PlacesService {
         queryParameters: {
           'input': query,
           'key': _apiKey,
-          'types': '(cities)',
+          // Restrict suggestions to South Africa and include both cities
+          // and higher-level regions (provinces, metro areas).
+          // This makes searches like "Gqeberha" and "Eastern Cape"
+          // return results reliably within ZA.
+          'types': '(regions)',        // localities + admin areas
+          'components': 'country:za',  // only South Africa
+          'language': 'en',            // consistent labels
         },
       );
 
@@ -101,46 +116,59 @@ class PlacesService {
           }
         }
 
-        final neighbourhood = getComponent('neighborhood') ?? getComponent('sublocality_level_1') ?? getComponent('sublocality');
-        final route = getComponent('route');
-        final streetNumber = getComponent('street_number');
-        final locality = getComponent('locality') ?? getComponent('administrative_area_level_2') ?? getComponent('administrative_area_level_1');
+        // Build a suburb-level label like "Triangle Farm, Bellville" when possible.
+        // In many SA areas:
+        // - neighborhood: Triangle Farm
+        // - sublocality_level_1: Bellville
+        // - locality: Cape Town (too broad)
+        final neighborhood = getComponent('neighborhood');
+        final sublocality1 =
+            getComponent('sublocality_level_1') ?? getComponent('sublocality');
+        final postalTown = getComponent('postal_town');
+        final locality = getComponent('locality');
+        final admin2 = getComponent('administrative_area_level_2');
+        final admin1 = getComponent('administrative_area_level_1');
 
-        // Prefer street address when available
-        if (route != null && streetNumber != null && locality != null) {
-          return '$route $streetNumber, $locality';
+        final second =
+            sublocality1 ?? postalTown ?? locality ?? admin2 ?? admin1;
+
+        if (neighborhood != null &&
+            second != null &&
+            neighborhood.isNotEmpty &&
+            second.isNotEmpty &&
+            neighborhood.toLowerCase() != second.toLowerCase()) {
+          return '$neighborhood, $second';
         }
 
-        if (neighbourhood != null && locality != null) {
-          return '$neighbourhood, $locality';
+        if (sublocality1 != null &&
+            locality != null &&
+            sublocality1.isNotEmpty &&
+            locality.isNotEmpty &&
+            sublocality1.toLowerCase() != locality.toLowerCase()) {
+          return '$sublocality1, $locality';
         }
 
-        if (formattedAddress != null && formattedAddress.isNotEmpty) return formattedAddress;
+        if (neighborhood != null && neighborhood.isNotEmpty) return neighborhood;
+        if (sublocality1 != null && sublocality1.isNotEmpty) return sublocality1;
+        if (locality != null && locality.isNotEmpty) return locality;
+
+        // As a last resort, use Google's formatted_address (may be long).
+        if (formattedAddress != null && formattedAddress.isNotEmpty) {
+          return formattedAddress;
+        }
 
         // If Google did not return a useful formatted address, try Nominatim as a secondary fallback
         printWarning('Google Geocoding did not provide a granular address; trying Nominatim fallback');
         final nom = await reverseGeocodeNominatim(lat, lng);
-        // If Overpass can find a closer named place, prefer it
+        // Prefer Nominatim's suburb/town name when available;
+        // only fall back to Overpass if Nominatim returns nothing.
         final overpass = await reverseGeocodeOverpass(lat, lng);
-        if (overpass != null) {
-          final overName = overpass['name'] as String;
-          final overDist = overpass['distance'] as double;
-          final nomLat = nom?['lat'] as double?;
-          final nomLon = nom?['lon'] as double?;
-          double nomDist = double.infinity;
-          if (nomLat != null && nomLon != null) {
-            nomDist = _haversineDistanceMeters(lat, lng, nomLat, nomLon);
-          }
-          printInfo('Nominatim dist: ${nomDist == double.infinity ? 'unknown' : nomDist.toStringAsFixed(0)} m, Overpass dist: ${overDist.toStringAsFixed(0)} m');
-
-          // If Overpass found a nearer place, prefer it
-          if (overDist < nomDist) {
-            printSuccess('Overpass returned nearer place: $overName (${overDist.toStringAsFixed(0)} m)');
-            return overName;
-          }
+        if (nom != null) {
+          return nom['name'] as String?;
         }
-
-        if (nom != null) return nom['name'] as String?;
+        if (overpass != null) {
+          return overpass['name'] as String?;
+        }
         return null;
       }
 
@@ -148,20 +176,7 @@ class PlacesService {
       printWarning('Google Geocoding HTTP ${response.statusCode}; trying Nominatim');
       final nomFallback = await reverseGeocodeNominatim(lat, lng);
       final overpassFallback = await reverseGeocodeOverpass(lat, lng);
-      if (overpassFallback != null && nomFallback != null) {
-        final nomLat = nomFallback['lat'] as double?;
-        final nomLon = nomFallback['lon'] as double?;
-        double nomDist = double.infinity;
-        if (nomLat != null && nomLon != null) {
-          nomDist = _haversineDistanceMeters(lat, lng, nomLat, nomLon);
-        }
-        final overDist = overpassFallback['distance'] as double;
-        if (overDist < nomDist) {
-          printSuccess('Overpass returned nearer place (HTTP non-200 path): ${overpassFallback['name']} (${overDist.toStringAsFixed(0)} m)');
-          return overpassFallback['name'] as String?;
-        }
-      }
-
+      // Prefer Nominatim when both are available; Overpass is a backup only.
       if (nomFallback != null) return nomFallback['name'] as String?;
       if (overpassFallback != null) return overpassFallback['name'] as String?;
 
@@ -171,20 +186,7 @@ class PlacesService {
       // On any exception, try Nominatim as a last resort
       final nomLast = await reverseGeocodeNominatim(lat, lng);
       final overLast = await reverseGeocodeOverpass(lat, lng);
-      if (overLast != null && nomLast != null) {
-        final nomLat = nomLast['lat'] as double?;
-        final nomLon = nomLast['lon'] as double?;
-        double nomDist = double.infinity;
-        if (nomLat != null && nomLon != null) {
-          nomDist = _haversineDistanceMeters(lat, lng, nomLat, nomLon);
-        }
-        final overDist = overLast['distance'] as double;
-        if (overDist < nomDist) {
-          printSuccess('Overpass returned nearer place (exception path): ${overLast['name']} (${overDist.toStringAsFixed(0)} m)');
-          return overLast['name'] as String?;
-        }
-      }
-
+      // Same rule: Nominatim first, then Overpass as backup.
       if (nomLast != null) return nomLast['name'] as String?;
       if (overLast != null) return overLast['name'] as String?;
 
@@ -198,12 +200,22 @@ class PlacesService {
   Future<Map<String, dynamic>?> reverseGeocodeNominatim(double lat, double lng) async {
     try {
       final url = 'https://nominatim.openstreetmap.org/reverse';
-      final response = await _dio.get(url, queryParameters: {
-        'lat': lat,
-        'lon': lng,
-        'format': 'jsonv2',
-        'addressdetails': 1,
-      });
+      final response = await _dio.get(
+        url,
+        queryParameters: {
+          'lat': lat,
+          'lon': lng,
+          'format': 'jsonv2',
+          'addressdetails': 1,
+        },
+        options: Options(
+          headers: const {
+            // Nominatim policy: identify your application via User-Agent.
+            'User-Agent': 'AppManiazarWeatherApp/1.0',
+            'Accept': 'application/json',
+          },
+        ),
+      );
 
       if (response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>?;
@@ -267,7 +279,17 @@ class PlacesService {
 out center;''';
 
       final url = 'https://overpass-api.de/api/interpreter';
-      final response = await _dio.post(url, data: query, options: Options(headers: {'Content-Type': 'text/plain'}));
+      final response = await _dio.post(
+        url,
+        data: query,
+        options: Options(
+          headers: const {
+            'Content-Type': 'text/plain',
+            'User-Agent': 'AppManiazarWeatherApp/1.0',
+            'Accept': 'application/json',
+          },
+        ),
+      );
 
       if (response.statusCode == 200) {
         final elements = response.data['elements'] as List<dynamic>?;
@@ -334,9 +356,18 @@ out center;''';
   }
 
   Future<({double lat, double lon})> getLocationFromAddress(String address) async {
-    final locations = await locationFromAddress(address);
-    final location = locations.first;
-    return (lat: location.latitude, lon: location.longitude);
+    try {
+      final locations = await locationFromAddress(address);
+      if (locations.isNotEmpty) {
+        final location = locations.first;
+        return (lat: location.latitude, lon: location.longitude);
+      }
+      // Return fallback coordinates if no location found
+      return (lat: -26.2041, lon: 28.0473); // Johannesburg fallback
+    } catch (e) {
+      // Return fallback coordinates on error
+      return (lat: -26.2041, lon: 28.0473); // Johannesburg fallback
+    }
   }
 }
 

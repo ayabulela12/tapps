@@ -6,14 +6,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class FirebaseException implements Exception {
+// Define custom exception to avoid conflict with Firebase's FirebaseException
+class AppFirebaseException implements Exception {
   final String message;
   final dynamic originalError;
 
-  FirebaseException(this.message, [this.originalError]);
+  AppFirebaseException(this.message, [this.originalError]);
 
   @override
-  String toString() => 'FirebaseException: $message${originalError != null ? '\nOriginal error: $originalError' : ''}';
+  String toString() => 'AppFirebaseException: $message${originalError != null ? '\nOriginal error: $originalError' : ''}';
 }
 
 class DamLevelsRecord {
@@ -31,7 +32,7 @@ class DamLevelsRecord {
 
   factory DamLevelsRecord.fromFirestore(DocumentSnapshot doc) {
     if (!doc.exists) {
-      throw FirebaseException('Document does not exist');
+      throw AppFirebaseException('Document does not exist');
     }
 
     try {
@@ -44,7 +45,7 @@ class DamLevelsRecord {
         timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       );
     } catch (e) {
-      throw FirebaseException('Failed to parse document data', e);
+      throw AppFirebaseException('Failed to parse document data', e);
     }
   }
 }
@@ -82,7 +83,7 @@ class FirebaseService {
         await subscription?.cancel();
 
         if (attempts >= _maxRetries) {
-          controller.addError(FirebaseException('All retry attempts failed for $operationName'));
+          controller.addError(AppFirebaseException('All retry attempts failed for $operationName'));
           await controller.close();
           return;
         }
@@ -126,12 +127,12 @@ class FirebaseService {
             .snapshots()
             .handleError((error) {
               debugPrint('❌ Error fetching dam levels: $error');
-              throw FirebaseException('Failed to fetch dam levels', error);
+              throw AppFirebaseException('Failed to fetch dam levels', error);
             })
             .map((snapshot) => DamLevelsRecord.fromFirestore(snapshot));
       }, 'getDamLevels');
     } catch (e) {
-      throw FirebaseException('Failed to create dam levels stream', e);
+      throw AppFirebaseException('Failed to create dam levels stream', e);
     }
   }
 
@@ -185,7 +186,7 @@ class FirebaseService {
       // Validate province code
       if (!provinceConfigs.containsKey(provinceCode)) {
         debugPrint('⚠️ Invalid province code: $provinceCode');
-        throw FirebaseException('Invalid province code: $provinceCode. Valid codes are: ${provinceConfigs.keys.join(", ")}');
+        throw AppFirebaseException('Invalid province code: $provinceCode. Valid codes are: ${provinceConfigs.keys.join(", ")}');
       }
 
       final config = provinceConfigs[provinceCode]!;
@@ -203,12 +204,12 @@ class FirebaseService {
             .snapshots()
             .handleError((error) {
               debugPrint('❌ Error fetching province totals for $provinceCode: $error');
-              throw FirebaseException('Failed to fetch province totals for $provinceCode', error);
+              throw AppFirebaseException('Failed to fetch province totals for $provinceCode', error);
             })
             .map((snapshot) {
               if (!snapshot.exists) {
                 debugPrint('⚠️ No data found for province: $provinceCode');
-                throw FirebaseException('No data found for province: $provinceCode');
+                throw AppFirebaseException('No data found for province: $provinceCode');
               }
               debugPrint('✅ Successfully fetched data for province: $provinceCode');
               return ProvinceRecord.fromFirestore(snapshot);
@@ -216,7 +217,7 @@ class FirebaseService {
       }, 'getProvinceTotals');
     } catch (e) {
       debugPrint('❌ Error in getProvinceTotals for $provinceCode: $e');
-      throw FirebaseException('Failed to create province totals stream for $provinceCode', e);
+      throw AppFirebaseException('Failed to create province totals stream for $provinceCode', e);
     }
   }
 
@@ -231,12 +232,12 @@ class FirebaseService {
             .snapshots()
             .handleError((error) {
               debugPrint('❌ Error fetching $collectionName totals: $error');
-              throw FirebaseException('Failed to fetch $collectionName totals', error);
+              throw AppFirebaseException('Failed to fetch $collectionName totals', error);
             })
             .map((snapshot) {
               if (!snapshot.exists) {
                 debugPrint('⚠️ No data found for $collectionName/$documentId');
-                throw FirebaseException('No data found for $collectionName/$documentId');
+                throw AppFirebaseException('No data found for $collectionName/$documentId');
               }
               debugPrint('✅ Successfully fetched data for $collectionName/$documentId');
               return ProvinceRecord.fromFirestore(snapshot);
@@ -244,7 +245,7 @@ class FirebaseService {
       }, 'getMetroTotals');
     } catch (e) {
       debugPrint('❌ Error in getMetroTotals: $e');
-      throw FirebaseException('Failed to create $collectionName totals stream', e);
+      throw AppFirebaseException('Failed to create $collectionName totals stream', e);
     }
   }
 
@@ -269,7 +270,7 @@ class FirebaseService {
 
       if (!provinceDamsCollections.containsKey(provinceCode)) {
         debugPrint('⚠️ Invalid province code for dams: $provinceCode');
-        throw FirebaseException('Invalid province code for dams: $provinceCode');
+        throw AppFirebaseException('Invalid province code for dams: $provinceCode');
       }
 
       final collectionName = provinceDamsCollections[provinceCode]!;
@@ -289,7 +290,7 @@ class FirebaseService {
                 return Stream.value([]);
               }
               
-              throw FirebaseException('Failed to fetch province dams for $provinceCode', error);
+              throw AppFirebaseException('Failed to fetch province dams for $provinceCode', error);
             })
             .map((snapshot) {
               if (snapshot.docs.isEmpty) {
@@ -312,7 +313,7 @@ class FirebaseService {
       }, 'getProvinceDams');
     } catch (e) {
       debugPrint('❌ Error in getProvinceDams for $provinceCode: $e');
-      throw FirebaseException('Failed to create province dams stream for $provinceCode', e);
+      throw AppFirebaseException('Failed to create province dams stream for $provinceCode', e);
     }
   }
 

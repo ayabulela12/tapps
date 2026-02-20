@@ -70,6 +70,8 @@ class _ReportScreenState extends State<ReportScreen> {
       // Get current position
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
+        forceAndroidLocationManager: false,
+        timeLimit: const Duration(seconds: 30),
       );
 
       // Get address from coordinates

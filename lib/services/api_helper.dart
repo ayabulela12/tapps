@@ -1,13 +1,13 @@
-import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart' show immutable;
-import 'package:geolocator/geolocator.dart';
-import 'package:logger/logger.dart';
 import 'package:appmaniazar/constants/constants.dart';
 import 'package:appmaniazar/models/hourly_weather.dart';
 import 'package:appmaniazar/models/weather.dart';
 import 'package:appmaniazar/models/weekly_weather.dart';
 import 'package:appmaniazar/services/geolocator.dart';
 import 'package:appmaniazar/utils/logging.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show immutable;
+import 'package:geolocator/geolocator.dart';
+import 'package:logger/logger.dart';
 
 @immutable
 class ApiHelper {
@@ -111,6 +111,47 @@ class ApiHelper {
 
   //Weather by city
   static Future<Weather> getWeatherByCityName(String cityName) async {
+    final logger = ApiHelper.logger;
+
+    // Normalise query and default to ZA to stay inside South Africa.
+    final trimmed = cityName.trim();
+    final query = trimmed.contains(',') ? trimmed : '$trimmed,ZA';
+
+    // 1) Prefer OpenWeather's direct geocoding API to resolve the name
+    //    to coordinates (more robust for renamed cities like "Gqeberha").
+    final geoUrl =
+        'https://api.openweathermap.org/geo/1.0/direct?q=$query&limit=1&appid=${Constants.apiKey}';
+
+    try {
+      logger.i('🌍 Resolving city name via geocoding: "$query"');
+      final geoResponse = await dio.get(geoUrl);
+
+      if (geoResponse.statusCode == 200 && geoResponse.data is List) {
+        final list = geoResponse.data as List;
+        if (list.isNotEmpty) {
+          final loc = list.first as Map<String, dynamic>;
+          final lat = (loc['lat'] as num).toDouble();
+          final lon = (loc['lon'] as num).toDouble();
+          logger.i(
+              '📍 Geocoding resolved "$query" to lat=$lat, lon=$lon. Fetching weather by coordinates.');
+          return getWeatherByCoordinates(lat, lon);
+        } else {
+          logger.w(
+              '⚠️ Geocoding returned empty list for "$query". Falling back to /weather?q=…');
+        }
+      } else {
+        logger.w(
+            '⚠️ Geocoding HTTP ${geoResponse.statusCode} for "$query". Falling back to /weather?q=…');
+      }
+    } catch (e, stackTrace) {
+      logger.w(
+        '⚠️ Error during geocoding for "$query", falling back to /weather',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
+
+    // 2) Fallback: old behaviour using /weather?q=…
     final url = _construcWeatherByCityUrl(cityName);
     final response = await _fetchData(url);
     return Weather.fromJson(response);
@@ -124,8 +165,14 @@ class ApiHelper {
     return '$baseUrl/weather?lat=${_currentPosition!.latitude}&lon=${_currentPosition!.longitude}&appid=${Constants.apiKey}&units=metric';
   }
 
-  static String _construcWeatherByCityUrl(String cityName) =>
-      '$baseUrl/weather?q=$cityName&appid=${Constants.apiKey}&units=metric';
+  static String _construcWeatherByCityUrl(String cityName) {
+    // If no country is specified, default to South Africa ("ZA") to avoid
+    // resolving to the wrong city in another country (e.g. Bellville, US).
+    final trimmed = cityName.trim();
+    final query =
+        trimmed.contains(',') ? trimmed : '$trimmed,ZA'; // ZA-specific app
+    return '$baseUrl/weather?q=$query&appid=${Constants.apiKey}&units=metric';
+  }
 
   static String _construcWeeklyForecastUrl() {
     if (_currentPosition == null) {

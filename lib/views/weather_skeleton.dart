@@ -9,8 +9,16 @@ class WeatherSkeleton extends StatelessWidget {
     return Shimmer.fromColors(
       baseColor: Colors.grey[300]!,
       highlightColor: Colors.grey[100]!,
-      child: Column(
-        children: [
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
           // Search bar skeleton
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -118,7 +126,7 @@ class WeatherSkeleton extends StatelessWidget {
             height: 100,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: 5,
+                      itemCount: 5,
               itemBuilder: (context, index) => Padding(
                 padding: const EdgeInsets.only(
                   right: 16,
@@ -135,7 +143,11 @@ class WeatherSkeleton extends StatelessWidget {
               ),
             ),
           ),
-        ],
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
