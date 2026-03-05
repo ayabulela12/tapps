@@ -22,33 +22,169 @@ class PlacesService {
 
   Future<List<PlaceSearchResult>> searchPlaces(String query) async {
     try {
+      print('🔍 PlacesService.searchPlaces called with query: "$query"');
+      
+      // Clean and normalize the query for better South African results
+      String normalizedQuery = query.trim();
+      
+      // Add common South African place suffixes if query is short
+      if (normalizedQuery.length <= 3) {
+        // Don't modify short queries to avoid confusion
+      } else if (!normalizedQuery.contains(' ') && 
+                 !normalizedQuery.toLowerCase().contains(RegExp(r'(town|city|berg|dam|river|bay|port|park|estate|farm|kraal)'))) {
+        // For single-word queries, try to enhance with common SA place patterns
+        // But don't modify if it already contains place indicators
+      }
+
+      final requestUrl = '$_baseUrl/autocomplete/json';
+      final queryParams = {
+        'input': normalizedQuery,
+        'key': _apiKey,
+        // Include all place types but filter out geographical features
+        'types': '(regions)',        // towns, cities, suburbs, provinces, regions
+        'components': 'country:za',  // Restrict to South Africa only
+        'language': 'en',            // English results
+        'strictbounds': 'true',      // Enforce country restriction
+        // Add location bias towards major South African population centers
+        'location': '-28.4793,24.6777', // Center of South Africa
+        'radius': '1000000',         // 1000km radius to cover entire country
+      };
+      
+      print('🔍 Making request to: $requestUrl');
+      print('🔍 Query params: ${queryParams.keys.map((k) => '$k=${queryParams[k]}').join('&')}');
+
       final response = await _dio.get(
-        '$_baseUrl/autocomplete/json',
-        queryParameters: {
-          'input': query,
-          'key': _apiKey,
-          // Restrict suggestions to South Africa and include both cities
-          // and higher-level regions (provinces, metro areas).
-          // This makes searches like "Gqeberha" and "Eastern Cape"
-          // return results reliably within ZA.
-          'types': '(regions)',        // localities + admin areas
-          'components': 'country:za',  // only South Africa
-          'language': 'en',            // consistent labels
-        },
+        requestUrl,
+        queryParameters: queryParams,
       );
+
+      print('🔍 Response status: ${response.statusCode}');
+      print('🔍 Response data: ${response.data}');
 
       if (response.statusCode == 200) {
         final predictions = response.data['predictions'] as List;
-        return predictions
+        print('🔍 Raw predictions count: ${predictions.length}');
+        
+        // Filter and prioritize results for better South African experience
+        List<PlaceSearchResult> results = predictions
             .map((prediction) => PlaceSearchResult.fromJson(prediction))
+            .where((result) => _isRelevantSouthAfricanPlace(result))
             .toList();
+            
+        print('🔍 Filtered results count: ${results.length}');
+        
+        // Sort results by relevance: suburbs > towns > provinces
+        results.sort((a, b) => _comparePlaceRelevance(a, b));
+        
+        // Limit to top 10 most relevant results
+        final finalResults = results.take(10).toList();
+        print('🔍 Final results: ${finalResults.map((r) => r.mainText).toList()}');
+        
+        return finalResults;
       } else {
-        throw Exception('Failed to search places');
+        throw Exception('Failed to search places: Status ${response.statusCode}');
       }
     } catch (e) {
       printError('Error searching places: $e');
       throw Exception('Failed to search places: $e');
     }
+  }
+
+  /// Filter out geographical features but keep all populated places
+  bool _isRelevantSouthAfricanPlace(PlaceSearchResult place) {
+    final description = place.description.toLowerCase();
+    final mainText = place.mainText.toLowerCase();
+    
+    // Filter out generic or non-SA specific results
+    if (description.contains('generic') || 
+        description.contains('worldwide') ||
+        mainText.length < 2) {
+      return false;
+    }
+    
+    // Filter out geographical features (dams, rivers, bays, etc.)
+    // But keep towns, cities, suburbs, provinces, regions
+    final geographicalFeatures = [
+      'dam', 'river', 'bay', 'port', 'mountain', 'mount', 'peak',
+      'park', 'nature reserve', 'forest', 'lake', 'pan', 'drif',
+      'waterfall', 'spring', 'vallei', 'vlei', 'hoek', 'nek'
+    ];
+    
+    // Check if this is a geographical feature we want to exclude
+    bool isGeographicalFeature = geographicalFeatures.any((feature) => 
+        mainText.contains(feature) && 
+        !mainText.contains('town') && 
+        !mainText.contains('city') &&
+        !mainText.contains('suburb'));
+    
+    if (isGeographicalFeature) {
+      return false;
+    }
+    
+    // Allow all populated places: towns, cities, suburbs, provinces, regions
+    // Also allow places that have town/city/suburb indicators
+    final populatedPlaceIndicators = [
+      'town', 'city', 'suburb', 'neighborhood', 'area',
+      'estate', 'farm', 'kraal', 'dal', 'fontein'
+    ];
+    
+    bool hasPopulatedIndicator = populatedPlaceIndicators.any((indicator) => 
+        mainText.contains(indicator) || description.contains(indicator));
+    
+    // Include if it has populated place indicators or is a well-known place
+    return hasPopulatedIndicator || 
+           mainText.length > 3 || // Longer names are likely real places
+           description.contains('south africa');
+  }
+
+  /// Compare place relevance: suburbs > towns > cities > provinces > regions
+  int _comparePlaceRelevance(PlaceSearchResult a, PlaceSearchResult b) {
+    // Priority order: suburbs > towns > cities > provinces > regions
+    final aTypes = a.description.toLowerCase();
+    final bTypes = b.description.toLowerCase();
+    
+    // Check for suburbs/neighborhoods (most specific)
+    bool aIsSuburb = aTypes.contains('suburb') || aTypes.contains('neighborhood');
+    bool bIsSuburb = bTypes.contains('suburb') || bTypes.contains('neighborhood');
+    if (aIsSuburb != bIsSuburb) return aIsSuburb ? -1 : 1;
+    
+    // Check for towns
+    bool aIsTown = aTypes.contains('town');
+    bool bIsTown = bTypes.contains('town');
+    if (aIsTown != bIsTown) return aIsTown ? -1 : 1;
+    
+    // Check for cities
+    bool aIsCity = aTypes.contains('city');
+    bool bIsCity = bTypes.contains('city');
+    if (aIsCity != bIsCity) return aIsCity ? -1 : 1;
+    
+    // Check for provinces (less specific but still relevant)
+    bool aIsProvince = aTypes.contains('province') || 
+                       aTypes.contains('eastern cape') ||
+                       aTypes.contains('western cape') ||
+                       aTypes.contains('northern cape') ||
+                       aTypes.contains('free state') ||
+                       aTypes.contains('kwazulu-natal') ||
+                       aTypes.contains('mpumalanga') ||
+                       aTypes.contains('limpopo') ||
+                       aTypes.contains('north west') ||
+                       aTypes.contains('gauteng');
+    
+    bool bIsProvince = bTypes.contains('province') || 
+                       bTypes.contains('eastern cape') ||
+                       bTypes.contains('western cape') ||
+                       bTypes.contains('northern cape') ||
+                       bTypes.contains('free state') ||
+                       bTypes.contains('kwazulu-natal') ||
+                       bTypes.contains('mpumalanga') ||
+                       bTypes.contains('limpopo') ||
+                       bTypes.contains('north west') ||
+                       bTypes.contains('gauteng');
+    
+    if (aIsProvince != bIsProvince) return aIsProvince ? 1 : -1;
+    
+    // If same type, prefer shorter, more specific names
+    return a.mainText.length.compareTo(b.mainText.length);
   }
 
   Future<PlaceDetails> getPlaceDetails(String placeId) async {
@@ -121,36 +257,71 @@ class PlacesService {
         // - neighborhood: Triangle Farm
         // - sublocality_level_1: Bellville
         // - locality: Cape Town (too broad)
+        // - administrative_area_level_2: often shows "Ward X" - avoid this
         final neighborhood = getComponent('neighborhood');
         final sublocality1 =
             getComponent('sublocality_level_1') ?? getComponent('sublocality');
+        final sublocality2 = getComponent('sublocality_level_2');
         final postalTown = getComponent('postal_town');
         final locality = getComponent('locality');
         final admin2 = getComponent('administrative_area_level_2');
         final admin1 = getComponent('administrative_area_level_1');
 
-        final second =
-            sublocality1 ?? postalTown ?? locality ?? admin2 ?? admin1;
-
-        if (neighborhood != null &&
-            second != null &&
-            neighborhood.isNotEmpty &&
-            second.isNotEmpty &&
-            neighborhood.toLowerCase() != second.toLowerCase()) {
-          return '$neighborhood, $second';
+        // Prioritize the most specific location available
+        // For Triangle Farm, we want: neighborhood > sublocality > postal_town > locality
+        String? mostSpecific;
+        
+        if (neighborhood != null && neighborhood.isNotEmpty) {
+          mostSpecific = neighborhood;
+        } else if (sublocality1 != null && sublocality1.isNotEmpty) {
+          mostSpecific = sublocality1;
+        } else if (sublocality2 != null && sublocality2.isNotEmpty) {
+          mostSpecific = sublocality2;
+        } else if (postalTown != null && postalTown.isNotEmpty) {
+          mostSpecific = postalTown;
+        } else if (locality != null && locality.isNotEmpty) {
+          mostSpecific = locality;
         }
 
-        if (sublocality1 != null &&
-            locality != null &&
-            sublocality1.isNotEmpty &&
-            locality.isNotEmpty &&
-            sublocality1.toLowerCase() != locality.toLowerCase()) {
-          return '$sublocality1, $locality';
+        // Filter out ward-like names from admin2
+        String? filterWardNames(String? name) {
+          if (name == null) return null;
+          // Filter out "Ward X", "Ward XX", etc.
+          if (name.toLowerCase().startsWith('ward ') && 
+              name.split(' ').length == 2) {
+            return null;
+          }
+          return name;
         }
 
-        if (neighborhood != null && neighborhood.isNotEmpty) return neighborhood;
+        final filteredAdmin2 = filterWardNames(admin2);
+
+        // If we have a most specific location, try to pair it with a broader one
+        if (mostSpecific != null) {
+          // Don't duplicate if it's the same as the broader location
+          if (sublocality1 != null && sublocality1.isNotEmpty && 
+              sublocality1.toLowerCase() != mostSpecific.toLowerCase()) {
+            return '$mostSpecific, $sublocality1';
+          }
+          if (postalTown != null && postalTown.isNotEmpty && 
+              postalTown.toLowerCase() != mostSpecific.toLowerCase()) {
+            return '$mostSpecific, $postalTown';
+          }
+          if (locality != null && locality.isNotEmpty && 
+              locality.toLowerCase() != mostSpecific.toLowerCase()) {
+            return '$mostSpecific, $locality';
+          }
+          // Return just the most specific if no broader location available
+          return mostSpecific;
+        }
+
+        // Fallback to broader locations
         if (sublocality1 != null && sublocality1.isNotEmpty) return sublocality1;
+        if (postalTown != null && postalTown.isNotEmpty) return postalTown;
         if (locality != null && locality.isNotEmpty) return locality;
+        
+        // Only use filtered admin2 as last resort
+        if (filteredAdmin2 != null && filteredAdmin2.isNotEmpty) return filteredAdmin2;
 
         // As a last resort, use Google's formatted_address (may be long).
         if (formattedAddress != null && formattedAddress.isNotEmpty) {
@@ -225,9 +396,20 @@ class PlacesService {
         if (address == null) return null;
 
         // Prefer suburb/neighbourhood/hamlet > town/village > city > county
+        // Filter out ward-like names from administrative divisions
+        String? filterWardNames(String? name) {
+          if (name == null) return null;
+          // Filter out "Ward X", "Ward XX", etc.
+          if (name.toLowerCase().startsWith('ward ') && 
+              name.split(' ').length == 2) {
+            return null;
+          }
+          return name;
+        }
+
         final suburb = address['suburb'] ?? address['neighbourhood'] ?? address['hamlet'];
         final town = address['town'] ?? address['village'] ?? address['city'];
-        final county = address['county'];
+        final county = filterWardNames(address['county'] as String?);
         final road = address['road'];
         final houseNumber = address['house_number'];
 
@@ -241,7 +423,7 @@ class PlacesService {
         } else if (town != null) {
           name = town as String?;
         } else if (county != null) {
-          name = county as String?;
+          name = county;
         } else {
           final display = data['display_name'] as String?;
           if (display != null && display.isNotEmpty) name = display;

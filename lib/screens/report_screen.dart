@@ -167,6 +167,61 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
+  Future<void> _showManualEmailInstructions({
+    required String email,
+    required String subject,
+    required String body,
+  }) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Email Client Not Found'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Please send an email with the following details:'),
+              const SizedBox(height: 16),
+              Text('To: $email',
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Text('Subject: $subject',
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              const Text('Body:',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(body),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Clipboard.setData(ClipboardData(
+                text: 'To: $email\nSubject: $subject\n\n$body',
+              ));
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Email details copied to clipboard'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+            child: const Text('Copy to Clipboard'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _submitReport() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -214,68 +269,22 @@ Submitted from Tapps App
         _phoneController.clear();
       } else {
         // If no email app found, show manual email instructions
-        await showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            title: const Text('Email Client Not Found'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Please send an email with the following details:'),
-                  const SizedBox(height: 16),
-                  const Text('To: $email', style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  const Text('Subject: $subject', style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  const Text('Body:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  Text(body),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  // Copy email details to clipboard
-                  Clipboard.setData(ClipboardData(
-                    text: 'To: $email\nSubject: $subject\n\n$body',
-                  ));
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Email details copied to clipboard'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
-                child: const Text('Copy to Clipboard'),
-              ),
-            ],
-          ),
+        await _showManualEmailInstructions(
+          email: email,
+          subject: subject,
+          body: body,
         );
       }
     } catch (e) {
       if (!mounted) return;
-      
-      await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Error Sending Email'),
-          content: Text('An error occurred: ${e.toString()}'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
+
+      // On devices where no activity can handle mailto: or url_launcher
+      // throws (e.g. some Huawei devices), fall back to the same manual
+      // instructions instead of showing a raw PlatformException.
+      await _showManualEmailInstructions(
+        email: email,
+        subject: subject,
+        body: body,
       );
     }
   }

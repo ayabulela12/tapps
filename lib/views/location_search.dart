@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:appmaniazar/providers/saved_locations_provider.dart';
 import 'package:appmaniazar/services/places_service.dart';
+import 'dart:async';
 
 final placesServiceProvider = Provider((ref) => PlacesService());
 final searchResultsProvider = StateProvider<List<PlaceSearchResult>>((ref) => []);
@@ -23,10 +24,12 @@ class LocationSearch extends ConsumerStatefulWidget {
 class _LocationSearchState extends ConsumerState<LocationSearch> {
   final TextEditingController _searchController = TextEditingController();
   bool _isSearching = false;
+  Timer? _debounceTimer;
 
   @override
   void dispose() {
     _searchController.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
@@ -42,32 +45,47 @@ class _LocationSearchState extends ConsumerState<LocationSearch> {
       _searchController.clear();
     });
     ref.read(searchResultsProvider.notifier).state = [];
+    _debounceTimer?.cancel();
   }
 
   Future<void> _searchPlaces(String query) async {
+    // Cancel previous timer
+    _debounceTimer?.cancel();
+    
     if (query.isEmpty) {
       ref.read(searchResultsProvider.notifier).state = [];
       return;
     }
 
-    ref.read(isLoadingProvider.notifier).state = true;
-    try {
-      final places = await ref.read(placesServiceProvider).searchPlaces(query);
-      if (!mounted) return;
-      ref.read(searchResultsProvider.notifier).state = places;
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error searching for places: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    // Only search if query has at least 2 characters
+    if (query.length < 2) {
+      return;
     }
-    
-    if (mounted) {
-      ref.read(isLoadingProvider.notifier).state = false;
-    }
+
+    // Debounce search to avoid too many API calls
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () async {
+      ref.read(isLoadingProvider.notifier).state = true;
+      try {
+        print('🔍 Searching for places with query: "$query"');
+        final places = await ref.read(placesServiceProvider).searchPlaces(query);
+        if (!mounted) return;
+        print('🔍 Found ${places.length} places: ${places.map((p) => p.mainText).toList()}');
+        ref.read(searchResultsProvider.notifier).state = places;
+      } catch (e) {
+        if (!mounted) return;
+        print('❌ Error searching places: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error searching for places: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      
+      if (mounted) {
+        ref.read(isLoadingProvider.notifier).state = false;
+      }
+    });
   }
 
   Future<void> _selectSearchResult(PlaceSearchResult result) async {
