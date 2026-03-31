@@ -97,10 +97,10 @@ class DamDetailsScreen extends ConsumerWidget {
     required List<Widget> children,
   }) {
     return Card(
-      color: Colors.white.withOpacity(0.1),
+      color: Colors.white.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.white.withOpacity(0.2)),
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),

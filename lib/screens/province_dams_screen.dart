@@ -77,7 +77,7 @@ class ProvinceDamsScreen extends ConsumerWidget {
                         ElevatedButton(
                           onPressed: () {
                             // Refresh the data
-                            ref.refresh(provinceDamsProvider(provinceCode));
+                            ref.invalidate(provinceDamsProvider(provinceCode));
                           },
                           child: const Text('Retry'),
                         ),

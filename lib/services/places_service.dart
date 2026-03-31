@@ -265,7 +265,6 @@ class PlacesService {
         final postalTown = getComponent('postal_town');
         final locality = getComponent('locality');
         final admin2 = getComponent('administrative_area_level_2');
-        final admin1 = getComponent('administrative_area_level_1');
 
         // Prioritize the most specific location available
         // For Triangle Farm, we want: neighborhood > sublocality > postal_town > locality

@@ -99,7 +99,7 @@ class ProvinceDetailsScreen extends ConsumerWidget {
                               const SizedBox(height: 16),
                               ElevatedButton(
                                 onPressed: () {
-                                  ref.refresh(provinceTotalsProvider(provinceCode));
+                                  ref.invalidate(provinceTotalsProvider(provinceCode));
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,

@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:appmaniazar/config/firebase_config.dart';
 import 'package:appmaniazar/constants/app_colors.dart';
+import 'package:appmaniazar/services/alert_service.dart';
 import 'package:appmaniazar/screens/home_screen.dart';
 import 'package:appmaniazar/screens/pick_location_screen.dart';
 import 'package:appmaniazar/screens/provinces_screen.dart';
@@ -163,6 +164,48 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
+  Widget _buildWeatherTabIcon() {
+    return Consumer(
+      builder: (context, ref, child) {
+        final unreadCount = ref.watch(unreadAlertsCountProvider);
+        
+        return Stack(
+          children: [
+            Icon(
+              _selectedIndex == 1 ? Icons.wb_sunny : Icons.wb_sunny_outlined,
+              size: 28,
+            ),
+            if (unreadCount > 0)
+              Positioned(
+                right: 0,
+                top: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 16,
+                    minHeight: 16,
+                  ),
+                  child: Text(
+                    unreadCount > 99 ? '99+' : unreadCount.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -172,15 +215,14 @@ class _MainScreenState extends State<MainScreen> {
         padding: const EdgeInsets.only(top: 8, bottom: 8),
         color: AppColors.primaryBlue,
         child: BottomNavigationBar(
-          items: const <BottomNavigationBarItem>[
+          items: <BottomNavigationBarItem>[
             BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined, size: 28),
               activeIcon: Icon(Icons.home, size: 28),
               label: 'Home',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.wb_sunny_outlined, size: 28),
-              activeIcon: Icon(Icons.wb_sunny, size: 28),
+              icon: _buildWeatherTabIcon(),
               label: 'Weather',
             ),
             BottomNavigationBarItem(
@@ -196,7 +238,7 @@ class _MainScreenState extends State<MainScreen> {
           ],
           currentIndex: _selectedIndex,
           selectedItemColor: Colors.white,
-          unselectedItemColor: Colors.white.withOpacity(0.5),
+          unselectedItemColor: Colors.white.withValues(alpha: 0.5),
           type: BottomNavigationBarType.fixed,
           backgroundColor: AppColors.primaryBlue,
           elevation: 0,

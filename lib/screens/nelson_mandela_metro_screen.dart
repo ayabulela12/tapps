@@ -146,7 +146,9 @@ class NelsonMandelaMetroScreen extends ConsumerWidget {
                               const SizedBox(height: 16),
                               ElevatedButton(
                                 onPressed: () {
-                                  ref.refresh(metroTotalsProvider('NelsonMandelaMetro'));
+                                  ref.invalidate(
+                                    metroTotalsProvider('NelsonMandelaBay/2uB3nGZnKKtg6y4ZaytH'),
+                                  );
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,

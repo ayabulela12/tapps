@@ -1,19 +1,20 @@
-import 'package:appmaniazar/constants/text_styles.dart';
-import 'package:appmaniazar/extensions/datetime.dart';
-import 'package:appmaniazar/providers/current_weather_provider.dart';
-import 'package:appmaniazar/screens/weather_locations_screen.dart';
-import 'package:appmaniazar/utils/get_weather_icons.dart';
-import 'package:appmaniazar/views/gradient_container.dart';
-import 'package:appmaniazar/views/hourly_forecast.dart';
-import 'package:appmaniazar/views/weather_info.dart';
-import 'package:appmaniazar/views/weather_skeleton.dart';
-import 'package:appmaniazar/views/weather_tips.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:appmaniazar/constants/text_styles.dart';
+import 'package:appmaniazar/providers/current_weather_provider.dart';
+import 'package:appmaniazar/views/alerts_panel.dart';
+import 'package:appmaniazar/views/gradient_container.dart';
+import 'package:appmaniazar/views/hourly_forecast.dart';
+import 'package:appmaniazar/views/weather_info.dart';
+import 'package:appmaniazar/views/weather_skeleton.dart';
+import 'package:appmaniazar/views/weather_tips.dart';
+import 'package:appmaniazar/screens/weather_locations_screen.dart';
+import 'package:appmaniazar/utils/get_weather_icons.dart';
 
 class WeatherScreen extends ConsumerStatefulWidget {
   const WeatherScreen({super.key});
@@ -25,6 +26,7 @@ class WeatherScreen extends ConsumerStatefulWidget {
 class _WeatherScreenState extends ConsumerState<WeatherScreen>
     with WidgetsBindingObserver {
   final logger = Logger();
+  bool _locationDenied = false;
   bool _isGenericLocationName(String name) {
     final lower = name.toLowerCase().trim();
     return lower.isEmpty ||
@@ -139,24 +141,30 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen>
 
   Future<void> _checkLocationPermission() async {
     try {
-      final permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        final newPermission = await Geolocator.requestPermission();
-        if (newPermission == LocationPermission.denied ||
-            newPermission == LocationPermission.deniedForever) {
-          logger.w('Location permission denied by user');
-        }
-      }
-      
-      // Check if location services are enabled
+      // Check if location services are enabled first
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         logger.w('Location services are disabled');
+        if (mounted) setState(() => _locationDenied = true);
+        return;
       }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      final denied = permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever;
+      if (denied) {
+        logger.w('Location permission denied by user');
+      }
+      if (mounted) setState(() => _locationDenied = denied);
     } catch (e) {
       logger.e('Error checking location permission: $e');
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final selectedLocation = ref.watch(selectedLocationProvider);
@@ -242,6 +250,15 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen>
                           ),
                           const SizedBox(width: 8),
                           Expanded(child: buildLocationText()),
+                          if (_locationDenied)
+                            Tooltip(
+                              message: 'Location access denied',
+                              child: Icon(
+                                Icons.location_off,
+                                color: Colors.white60,
+                                size: 18,
+                              ),
+                            ),
                           IconButton(
                             icon: const Icon(
                               Icons.search,
@@ -252,9 +269,38 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen>
                         ],
                       ),
                     ),
+                    if (_locationDenied)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 4),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.info_outline,
+                                  color: Colors.white70, size: 16),
+                              const SizedBox(width: 8),
+                              const Expanded(
+                                child: Text(
+                                  'Using a default location. Tap 🔍 to pick your city.',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 8),
                     Text(
-                      DateTime.now().dateTime,
+                      _formatDateTime(DateTime.now()),
                       style: TextStyles.subtitleText,
                       textAlign: TextAlign.center,
                     ),
@@ -333,6 +379,12 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen>
                       child: WeatherTips(),
                     ),
                     const SizedBox(height: 16),
+                    // Real-time Alerts and Insights Panel
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: AlertsPanel(),
+                    ),
+                    const SizedBox(height: 100), // Extra padding for scroll
                   ],
                 ),
               ),
@@ -349,5 +401,9 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen>
         },
       ),
     );
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 }

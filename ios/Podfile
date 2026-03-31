@@ -1,5 +1,5 @@
 # Uncomment this line to define a global platform for your project
-platform :ios, '13.0'
+platform :ios, '15.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -31,10 +31,6 @@ target 'Runner' do
   use_frameworks! :linkage => :static
   use_modular_headers!
 
-  # Set platform version for Google Maps Flutter iOS plugin
-  pod 'GoogleMaps', '= 7.3.0'
-  pod 'Google-Maps-iOS-Utils', '= 4.1.0'
-  
   # Install Flutter pods
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   
@@ -49,7 +45,7 @@ post_install do |installer|
     
     target.build_configurations.each do |config|
       # Set iOS deployment target
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
       
       # Disable bitcode
       config.build_settings['ENABLE_BITCODE'] = 'NO'
@@ -59,6 +55,22 @@ post_install do |installer|
       
       # Fix for Xcode 12.5+ - build active architecture only for debug
       config.build_settings['ONLY_ACTIVE_ARCH'] = 'NO'
+      
+      # Firebase-specific fixes for Swift concurrency issues
+      if target.name.start_with?('Firebase')
+        config.build_settings['SWIFT_VERSION'] = '5.0'
+        config.build_settings['LIBRARY_SEARCH_PATHS'] = '$(inherited)'
+        # Disable problematic Swift concurrency features
+        config.build_settings['SWIFT_EMIT_LOC_STRINGS'] = 'NO'
+        config.build_settings['SWIFT_ENABLE_OBJC_ATTRIBUTED_STRINGS'] = 'NO'
+      end
+      
+      # Specific fix for FirebaseSharedSwift
+      if target.name == 'FirebaseSharedSwift'
+        config.build_settings['SWIFT_EMIT_LOC_STRINGS'] = 'NO'
+        config.build_settings['SWIFT_ENABLE_OBJC_ATTRIBUTED_STRINGS'] = 'NO'
+        config.build_settings['SWIFT_OPTIMIZATION_LEVEL'] = '-Onone'
+      end
     end
   end
   
