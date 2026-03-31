@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:appmaniazar/views/gradient_container.dart';
 import 'package:appmaniazar/constants/text_styles.dart';
 import 'package:appmaniazar/services/firebase_service.dart';
+import 'package:appmaniazar/views/gradient_container.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ProvinceDamsScreen extends ConsumerWidget {
@@ -93,14 +93,14 @@ class ProvinceDamsScreen extends ConsumerWidget {
                       children: [
                         Icon(
                           Icons.water_drop_outlined, 
-                          color: Colors.white.withOpacity(0.6), 
+                          color: Colors.white.withValues(alpha: 0.6), 
                           size: 100
                         ),
                         const SizedBox(height: 20),
                         Text(
                           'No dam data available',
                           style: TextStyles.subtitleText.copyWith(
-                            color: Colors.white.withOpacity(0.6),
+                            color: Colors.white.withValues(alpha: 0.6),
                             fontSize: 18,
                           ),
                         ),
@@ -108,7 +108,7 @@ class ProvinceDamsScreen extends ConsumerWidget {
                         Text(
                           'Please check your permissions or network connection',
                           style: TextStyles.subtitleText.copyWith(
-                            color: Colors.white.withOpacity(0.4),
+                            color: Colors.white.withValues(alpha: 0.4),
                             fontSize: 14,
                           ),
                           textAlign: TextAlign.center,

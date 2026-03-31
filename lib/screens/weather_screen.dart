@@ -1,20 +1,21 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:logger/logger.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:appmaniazar/constants/text_styles.dart';
 import 'package:appmaniazar/providers/current_weather_provider.dart';
+import 'package:appmaniazar/screens/weather_locations_screen.dart';
+import 'package:appmaniazar/utils/get_weather_icons.dart';
 import 'package:appmaniazar/views/alerts_panel.dart';
 import 'package:appmaniazar/views/gradient_container.dart';
 import 'package:appmaniazar/views/hourly_forecast.dart';
 import 'package:appmaniazar/views/weather_info.dart';
 import 'package:appmaniazar/views/weather_skeleton.dart';
 import 'package:appmaniazar/views/weather_tips.dart';
-import 'package:appmaniazar/screens/weather_locations_screen.dart';
-import 'package:appmaniazar/utils/get_weather_icons.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:logger/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class WeatherScreen extends ConsumerStatefulWidget {
   const WeatherScreen({super.key});
@@ -277,7 +278,7 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
+                            color: Colors.white.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -350,10 +351,10 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen>
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
+                          color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                           ),
                         ),
                         child: Column(

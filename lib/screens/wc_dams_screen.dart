@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:appmaniazar/constants/app_colors.dart';
 import 'package:appmaniazar/constants/text_styles.dart';
 import 'package:appmaniazar/services/firebase_service.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class WCDamsScreen extends ConsumerWidget {
   const WCDamsScreen({super.key});
@@ -123,14 +123,14 @@ class WCDamsScreen extends ConsumerWidget {
                         children: [
                           Icon(
                             Icons.water_drop_outlined,
-                            color: Colors.white.withOpacity(0.6),
+                            color: Colors.white.withValues(alpha: 0.6),
                             size: 100,
                           ),
                           const SizedBox(height: 20),
                           Text(
                             'No Dams Found',
                             style: TextStyles.subtitleText.copyWith(
-                              color: Colors.white.withOpacity(0.6),
+                              color: Colors.white.withValues(alpha: 0.6),
                               fontSize: 18,
                             ),
                           ),
@@ -146,7 +146,7 @@ class WCDamsScreen extends ConsumerWidget {
                         
                         return Card(
                           margin: const EdgeInsets.only(bottom: 16),
-                          color: Colors.white.withOpacity(0.1),
+                          color: Colors.white.withValues(alpha: 0.1),
                           child: ExpansionTile(
                             title: Text(
                               dam['name'] ?? 'Unknown Dam',

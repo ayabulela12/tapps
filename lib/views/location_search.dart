@@ -1,9 +1,10 @@
+import 'dart:async';
+
+import 'package:appmaniazar/providers/saved_locations_provider.dart';
+import 'package:appmaniazar/services/places_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:appmaniazar/providers/saved_locations_provider.dart';
-import 'package:appmaniazar/services/places_service.dart';
-import 'dart:async';
 
 final placesServiceProvider = Provider((ref) => PlacesService());
 final searchResultsProvider = StateProvider<List<PlaceSearchResult>>((ref) => []);
@@ -163,7 +164,7 @@ class _LocationSearchState extends ConsumerState<LocationSearch> {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),

@@ -1,9 +1,9 @@
+import 'package:appmaniazar/screens/province_details_screen.dart';
+import 'package:appmaniazar/services/firebase_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:appmaniazar/screens/province_details_screen.dart';
-import 'package:appmaniazar/services/firebase_service.dart';
 
 class Province {
   final String name;
@@ -115,7 +115,7 @@ class ProvincesScreen extends ConsumerWidget {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
+                        color: Colors.white.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -184,7 +184,7 @@ class ProvincesScreen extends ConsumerWidget {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
+                  color: Colors.blue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -247,7 +247,7 @@ class ProvincesScreen extends ConsumerWidget {
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.blue.withOpacity(0.5),
+                                Colors.blue.withValues(alpha: 0.5),
                               ),
                             ),
                           ),

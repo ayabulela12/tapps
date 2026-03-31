@@ -122,7 +122,7 @@ class _WeatherLocationsScreenState
                     prefixIcon:
                         const Icon(Icons.search, color: Colors.white70),
                     filled: true,
-                    fillColor: Colors.white.withOpacity(0.1),
+                    fillColor: Colors.white.withValues(alpha: 0.1),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(24),
                       borderSide: BorderSide.none,
@@ -167,7 +167,7 @@ class _WeatherLocationsScreenState
                               background: Container(
                                 alignment: Alignment.centerRight,
                                 decoration: BoxDecoration(
-                                  color: Colors.red.withOpacity(0.8),
+                                  color: Colors.red.withValues(alpha: 0.8),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 padding:
@@ -277,7 +277,7 @@ class _WeatherLocationsScreenState
                                 loading: () => Container(
                                 height: 96,
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.08),
+                                  color: Colors.white.withValues(alpha: 0.08),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 alignment: Alignment.center,
@@ -289,7 +289,7 @@ class _WeatherLocationsScreenState
                                 error: (_, __) => Container(
                                   height: 96,
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.08),
+                                    color: Colors.white.withValues(alpha: 0.08),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   alignment: Alignment.centerLeft,

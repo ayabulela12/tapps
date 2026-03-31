@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:appmaniazar/constants/app_colors.dart';
 import 'package:appmaniazar/models/weather_alert.dart';
 import 'package:appmaniazar/services/alert_service.dart';
 import 'package:appmaniazar/services/insight_service.dart';
-import 'package:appmaniazar/constants/app_colors.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AlertsPanel extends ConsumerStatefulWidget {
   const AlertsPanel({super.key});
@@ -41,14 +41,14 @@ class _AlertsPanelState extends ConsumerState<AlertsPanel>
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            AppColors.primaryBlue.withOpacity(0.95),
-            AppColors.primaryBlue.withOpacity(0.85),
+            AppColors.primaryBlue.withValues(alpha: 0.95),
+            AppColors.primaryBlue.withValues(alpha: 0.85),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -115,7 +115,7 @@ class _AlertsPanelState extends ConsumerState<AlertsPanel>
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: TabBar(
@@ -224,10 +224,10 @@ class _AlertsPanelState extends ConsumerState<AlertsPanel>
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: alert.type.color.withOpacity(0.3),
+          color: alert.type.color.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -235,7 +235,7 @@ class _AlertsPanelState extends ConsumerState<AlertsPanel>
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: alert.type.color.withOpacity(0.2),
+            color: alert.type.color.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
@@ -324,7 +324,7 @@ class _AlertsPanelState extends ConsumerState<AlertsPanel>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -442,7 +442,7 @@ class _AlertsPanelState extends ConsumerState<AlertsPanel>
                         ref.invalidate(generateInsightsProvider);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white.withOpacity(0.2),
+                        backgroundColor: Colors.white.withValues(alpha: 0.2),
                         foregroundColor: Colors.white,
                       ),
                       child: Text(
@@ -476,10 +476,10 @@ class _AlertsPanelState extends ConsumerState<AlertsPanel>
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: insight.category.color.withOpacity(0.3),
+          color: insight.category.color.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -487,7 +487,7 @@ class _AlertsPanelState extends ConsumerState<AlertsPanel>
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: insight.category.color.withOpacity(0.2),
+            color: insight.category.color.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
@@ -530,7 +530,7 @@ class _AlertsPanelState extends ConsumerState<AlertsPanel>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -547,10 +547,10 @@ class _AlertsPanelState extends ConsumerState<AlertsPanel>
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: insight.category.color.withOpacity(0.1),
+                    color: insight.category.color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: insight.category.color.withOpacity(0.3),
+                      color: insight.category.color.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Column(

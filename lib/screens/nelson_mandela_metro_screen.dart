@@ -1,11 +1,11 @@
+import 'package:appmaniazar/constants/app_colors.dart';
+import 'package:appmaniazar/providers/firebase_providers.dart';
+import 'package:appmaniazar/views/gradient_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lottie/lottie.dart';
-import 'package:appmaniazar/providers/firebase_providers.dart';
-import 'package:appmaniazar/views/gradient_container.dart';
-import 'package:appmaniazar/constants/app_colors.dart';   
+import 'package:lottie/lottie.dart';   
 
 class NelsonMandelaMetroScreen extends ConsumerWidget {
   const NelsonMandelaMetroScreen({super.key});
@@ -93,7 +93,7 @@ class NelsonMandelaMetroScreen extends ConsumerWidget {
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
+                        color: Colors.white.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -203,10 +203,10 @@ class NelsonMandelaMetroScreen extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withOpacity(0.1),
+          color: Colors.white.withValues(alpha: 0.1),
           width: 1,
         ),
       ),

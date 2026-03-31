@@ -1,21 +1,21 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:lottie/lottie.dart';
+import 'package:appmaniazar/screens/city_of_cape_town_screen.dart';
 import 'package:appmaniazar/screens/ec_dams_screen.dart';
+import 'package:appmaniazar/screens/ethekwini_municipality_screen.dart';
 import 'package:appmaniazar/screens/fs_dams_screen.dart';
 import 'package:appmaniazar/screens/gp_dams_screen.dart';
 import 'package:appmaniazar/screens/kzn_dams_screen.dart';
 import 'package:appmaniazar/screens/lp_dams_screen.dart';
 import 'package:appmaniazar/screens/mp_dams_screen.dart';
 import 'package:appmaniazar/screens/nc_dams_screen.dart';
+import 'package:appmaniazar/screens/nelson_mandela_metro_screen.dart';
 import 'package:appmaniazar/screens/nw_dams_screen.dart';
 import 'package:appmaniazar/screens/wc_dams_screen.dart';
-import 'package:appmaniazar/screens/city_of_cape_town_screen.dart';
-import 'package:appmaniazar/screens/nelson_mandela_metro_screen.dart';
-import 'package:appmaniazar/screens/ethekwini_municipality_screen.dart';
 import 'package:appmaniazar/services/firebase_service.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:lottie/lottie.dart';
 
 class ProvinceDetailsScreen extends ConsumerWidget {
   final String provinceName;
@@ -186,13 +186,13 @@ class ProvinceDetailsScreen extends ConsumerWidget {
                                 vertical: 10,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.1),
+                                color: Colors.white.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
                                 'DAM LEVEL %',
                                 style: GoogleFonts.outfit(
-                                  color: Colors.white.withOpacity(0.9),
+                                  color: Colors.white.withValues(alpha: 0.9),
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   letterSpacing: 1.2,
@@ -254,7 +254,7 @@ class ProvinceDetailsScreen extends ConsumerWidget {
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        Colors.black.withOpacity(0.9),
+                        Colors.black.withValues(alpha: 0.9),
                       ],
                     ),
                   ),
@@ -381,10 +381,10 @@ class ProvinceDetailsScreen extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
+        color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: Colors.white.withOpacity(0.05),
+          color: Colors.white.withValues(alpha: 0.05),
           width: 1,
         ),
       ),
@@ -394,7 +394,7 @@ class ProvinceDetailsScreen extends ConsumerWidget {
           Text(
             label.toUpperCase(),
             style: GoogleFonts.outfit(
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha: 0.9),
               fontSize: 14,
               fontWeight: FontWeight.w500,
               letterSpacing: 0.5,

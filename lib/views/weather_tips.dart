@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:appmaniazar/constants/text_styles.dart';
+import 'package:flutter/material.dart';
 
 class WeatherTips extends StatelessWidget {
   const WeatherTips({super.key});
@@ -67,10 +67,10 @@ class WeatherTipCard extends StatelessWidget {
       width: 200,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withOpacity(0.2),
+          color: Colors.white.withValues(alpha: 0.2),
           width: 1,
         ),
       ),

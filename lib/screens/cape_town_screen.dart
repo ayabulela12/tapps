@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:appmaniazar/constants/app_colors.dart';
 // import 'package:appmaniazar/services/firebase_service.dart'; // Temporarily disabled
 import 'package:appmaniazar/views/gradient_container.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // Provider for Cape Town Metro totals - temporarily disabled
 // final capeTownMetroTotalsProvider = StreamProvider((ref) {
@@ -130,7 +130,7 @@ class CapeTownScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Row(
@@ -169,7 +169,7 @@ class CapeTownScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Row(
@@ -222,7 +222,7 @@ class CapeTownScreen extends ConsumerWidget {
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
+            color: Colors.white.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(15),
           ),
           child: Row(
@@ -248,7 +248,7 @@ class CapeTownScreen extends ConsumerWidget {
                     Text(
                       'Capacity: ${dam['capacity']}',
                       style: GoogleFonts.outfit(
-                        color: Colors.white.withOpacity(0.7),
+                        color: Colors.white.withValues(alpha: 0.7),
                         fontSize: 14,
                       ),
                     ),

@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:appmaniazar/constants/text_styles.dart';
 import 'package:appmaniazar/models/weather.dart';
 import 'package:appmaniazar/providers/get_weather_by_city_provider.dart';
-import 'package:appmaniazar/constants/text_styles.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jiffy/jiffy.dart';
 
 class SearchHistoryCard extends ConsumerWidget {
@@ -27,10 +27,10 @@ class SearchHistoryCard extends ConsumerWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.1),
+          color: Colors.white.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: Colors.white.withOpacity(0.2),
+            color: Colors.white.withValues(alpha: 0.2),
             width: 1,
           ),
         ),
@@ -61,7 +61,7 @@ class SearchHistoryCard extends ConsumerWidget {
                 Text(
                   'Searched ${Jiffy.parseFromDateTime(timestamp).fromNow()}',
                   style: TextStyles.subtitleText.copyWith(
-                    color: Colors.white.withOpacity(0.7),
+                    color: Colors.white.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -143,7 +143,7 @@ class SearchHistoryCard extends ConsumerWidget {
                     Text(
                       'Searched ${Jiffy.parseFromDateTime(timestamp).fromNow()}',
                       style: TextStyles.subtitleText.copyWith(
-                        color: Colors.white.withOpacity(0.7),
+                        color: Colors.white.withValues(alpha: 0.7),
                       ),
                     ),
                   ],

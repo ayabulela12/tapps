@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:appmaniazar/constants/app_colors.dart';
 import 'package:appmaniazar/constants/text_styles.dart';
 import 'package:appmaniazar/extensions/int.dart';
 import 'package:appmaniazar/providers/hourly_weather_provider.dart';
 import 'package:appmaniazar/utils/get_weather_icons.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class HourlyForecast extends ConsumerWidget {
   const HourlyForecast({super.key});
@@ -81,7 +81,7 @@ class HourlyForcastTitle extends StatelessWidget {
           boxShadow: isActive
               ? [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   )

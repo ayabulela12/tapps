@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:appmaniazar/constants/text_styles.dart';
 import 'package:appmaniazar/models/search_history_item.dart';
 import 'package:appmaniazar/providers/places_provider.dart';
 import 'package:appmaniazar/views/gradient_container.dart';
 import 'package:appmaniazar/widgets/search_history_card.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PickLocationScreen extends ConsumerStatefulWidget {
   const PickLocationScreen({super.key});
@@ -142,11 +142,11 @@ class _PickLocationScreenState extends ConsumerState<PickLocationScreen> {
               prefixIcon: const Icon(Icons.search, color: Colors.white70),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
