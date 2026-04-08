@@ -8,7 +8,7 @@ import 'package:geocoding/geocoding.dart';
 
 class PlacesService {
   static const String _baseUrl = 'https://maps.googleapis.com/maps/api/place';
-  static const String _apiKey = 'AIzaSyB8mhR3UIV8vlu2wLpVbNDILNvTA_TjKCw';
+  static const String _apiKey = 'AIzaSyC02b83kcHAliyseE_vp-fyyLdCLdmGqdg';
 
   // NOTE: Nominatim requires a valid User-Agent; without it requests can be rejected.
   final Dio _dio = Dio(
@@ -19,6 +19,111 @@ class PlacesService {
       },
     ),
   );
+
+  String coordinatesLabel(double lat, double lon) =>
+      '${lat.toStringAsFixed(4)}, ${lon.toStringAsFixed(4)}';
+
+  bool isGenericLocationName(String name) {
+    final lower = name.toLowerCase().trim();
+    return lower.isEmpty ||
+        lower.startsWith('city of ') ||
+        lower.contains('metro') ||
+        lower.contains('metropolitan') ||
+        lower.contains('municipality') ||
+        lower.contains('district') ||
+        lower.contains('county') ||
+        lower.contains('province') ||
+        lower.contains('region') ||
+        (lower.startsWith('ward ') && lower.split(' ').length == 2);
+  }
+
+  String normalizeLocationLabel(String label) {
+    final cleaned = label.replaceAll(RegExp(r'\s+'), ' ').trim();
+    final parts = cleaned
+        .split(',')
+        .map((p) => p.trim())
+        .where((p) => p.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return cleaned;
+    final deduped = <String>[];
+    for (final part in parts) {
+      if (!deduped.any((d) => d.toLowerCase() == part.toLowerCase())) {
+        deduped.add(part);
+      }
+    }
+    return deduped.join(', ');
+  }
+
+  String? formatPlacemarkLabel(Placemark place) {
+    String? nz(String? v) => (v == null || v.trim().isEmpty) ? null : v.trim();
+    final road = nz(place.thoroughfare) ?? nz(place.street);
+    final house = nz(place.subThoroughfare);
+    final suburb = nz(place.subLocality);
+    final town = nz(place.locality) ?? nz(place.subAdministrativeArea);
+    final admin = nz(place.administrativeArea);
+
+    String candidate;
+    if (road != null && house != null && suburb != null) {
+      candidate = '$road $house, $suburb';
+    } else if (road != null && house != null && town != null) {
+      candidate = '$road $house, $town';
+    } else if (road != null && suburb != null) {
+      candidate = '$road, $suburb';
+    } else if (road != null && town != null) {
+      candidate = '$road, $town';
+    } else if (suburb != null && town != null) {
+      candidate = '$suburb, $town';
+    } else if (suburb != null) {
+      candidate = suburb;
+    } else if (town != null) {
+      candidate = town;
+    } else if (admin != null) {
+      candidate = admin;
+    } else {
+      return null;
+    }
+
+    final normalized = normalizeLocationLabel(candidate);
+    if (normalized.isEmpty || isGenericLocationName(normalized)) return null;
+    return normalized;
+  }
+
+  Future<String> resolvePreferredLocationLabel(
+    double lat,
+    double lon, {
+    Placemark? nativePlacemark,
+  }) async {
+    final nativeLabel =
+        nativePlacemark != null ? formatPlacemarkLabel(nativePlacemark) : null;
+    final nativeHasSuburb = (nativePlacemark?.subLocality?.trim().isNotEmpty ?? false);
+    if (nativeLabel != null && nativeHasSuburb) return nativeLabel;
+
+    final googleOrFallback = await reverseGeocode(lat, lon);
+    if (googleOrFallback != null && googleOrFallback.trim().isNotEmpty) {
+      final normalized = normalizeLocationLabel(googleOrFallback);
+      if (!isGenericLocationName(normalized)) return normalized;
+    }
+
+    final nom = await reverseGeocodeNominatim(lat, lon);
+    final nomName = nom?['name'] as String?;
+    if (nomName != null && nomName.trim().isNotEmpty) {
+      final normalized = normalizeLocationLabel(nomName);
+      if (!isGenericLocationName(normalized)) return normalized;
+    }
+
+    final over = await reverseGeocodeOverpass(lat, lon);
+    final overName = over?['name'] as String?;
+    if (overName != null && overName.trim().isNotEmpty) {
+      final normalized = normalizeLocationLabel(overName);
+      if (!isGenericLocationName(normalized)) return normalized;
+    }
+
+    // If network geocoders could not provide suburb/city, keep native
+    // street-level label as a better fallback than raw coordinates.
+    if (nativeLabel != null) return nativeLabel;
+
+    return coordinatesLabel(lat, lon);
+  }
 
   Future<List<PlaceSearchResult>> searchPlaces(String query) async {
     try {
@@ -226,6 +331,12 @@ class PlacesService {
         final status = response.data['status'] as String?;
         final errorMessage = response.data['error_message'] as String?;
         printInfo('Google Geocoding status: ${status ?? 'null'} ${errorMessage != null ? '- $errorMessage' : ''}');
+        if (status == 'REQUEST_DENIED') {
+          printWarning(
+            'Google Geocoding REQUEST_DENIED. Verify Geocoding API is enabled '
+            'and API key restrictions allow this request. Using OSM fallback.',
+          );
+        }
       } catch (_) {}
 
       if (response.statusCode == 200) {

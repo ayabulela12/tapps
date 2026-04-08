@@ -1,4 +1,5 @@
 import 'package:appmaniazar/constants/brand_colors.dart';
+import 'package:appmaniazar/services/places_service.dart';
 import 'package:appmaniazar/views/gradient_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,10 +16,19 @@ class ReportScreen extends StatefulWidget {
 
 class _ReportScreenState extends State<ReportScreen> {
   final _formKey = GlobalKey<FormState>();
+  final PlacesService _placesService = PlacesService();
+  static const List<String> _reportTypeOptions = [
+    'Water Leaks',
+    'Pipe Bursts',
+    'Water Quality',
+    'No Water Supply',
+    'Water Wastage',
+  ];
   late final TextEditingController _locationController;
   late final TextEditingController _descriptionController;
   late final TextEditingController _phoneController;
   bool _isGettingLocation = false;
+  String? _selectedReportType;
 
   @override
   void initState() {
@@ -80,14 +90,14 @@ class _ReportScreenState extends State<ReportScreen> {
         position.longitude,
       );
 
-      if (placemarks.isNotEmpty) {
-        Placemark place = placemarks[0];
-        String address = '${place.street}, ${place.locality}, ${place.administrativeArea}, ${place.country}';
-        _locationController.text = address;
-      } else {
-        // If no address found, show coordinates
-        _locationController.text = '${position.latitude}, ${position.longitude}';
-      }
+      final Placemark? nativePlacemark =
+          placemarks.isNotEmpty ? placemarks.first : null;
+      final resolved = await _placesService.resolvePreferredLocationLabel(
+        position.latitude,
+        position.longitude,
+        nativePlacemark: nativePlacemark,
+      );
+      _locationController.text = resolved;
     } catch (e) {
       if (!mounted) return;
       _showLocationError('Error getting location: ${e.toString()}');
@@ -111,41 +121,6 @@ class _ReportScreenState extends State<ReportScreen> {
     setState(() {
       _isGettingLocation = false;
     });
-  }
-
-  Widget _buildInfoItem(String emoji, String title, String subtitle) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 20)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildTipItem(String emoji, String text) {
@@ -228,6 +203,8 @@ class _ReportScreenState extends State<ReportScreen> {
     const email = 'water@tapps.app';
     const subject = 'Water Issue Report';
     final body = '''
+What to Report: ${_selectedReportType ?? 'Not specified'}
+
 Location: ${_locationController.text}
 
 Issue Description:
@@ -267,6 +244,9 @@ Submitted from Tapps App
         _locationController.clear();
         _descriptionController.clear();
         _phoneController.clear();
+        setState(() {
+          _selectedReportType = null;
+        });
       } else {
         // If no email app found, show manual email instructions
         await _showManualEmailInstructions(
@@ -323,37 +303,6 @@ Submitted from Tapps App
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // What to Report Card
-                Card(
-                  elevation: 2,
-                  margin: const EdgeInsets.only(bottom: 20),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'What to Report?',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        _buildInfoItem('🚰', 'Water Leaks', 'Report any visible water leaks in public areas'),
-                        _buildInfoItem('💧', 'Pipe Bursts', 'Report burst pipes or major water main breaks'),
-                        _buildInfoItem('⚠️', 'Water Quality', 'Report discolored, smelly, or contaminated water'),
-                        _buildInfoItem('🚱', 'No Water Supply', 'Report complete loss of water supply'),
-                        _buildInfoItem('🌊', 'Water Wastage', 'Report cases of water wastage or misuse'),
-                      ],
-                    ),
-                  ),
-                ),
-                
                 // Report Form
                 Card(
                   elevation: 2,
@@ -425,7 +374,37 @@ Submitted from Tapps App
                           ),
                           
                           const SizedBox(height: 16),
+
+                          DropdownButtonFormField<String>(
+                            initialValue: _selectedReportType,
+                            decoration: const InputDecoration(
+                              labelText: 'What to Report',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.list_alt),
+                            ),
+                            items: _reportTypeOptions
+                                .map(
+                                  (option) => DropdownMenuItem<String>(
+                                    value: option,
+                                    child: Text(option),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedReportType = value;
+                              });
+                            },
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please select what you want to report';
+                              }
+                              return null;
+                            },
+                          ),
                           
+                          const SizedBox(height: 16),
+
                           // Description Field
                           TextFormField(
                             controller: _descriptionController,

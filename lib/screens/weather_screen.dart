@@ -28,18 +28,6 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen>
     with WidgetsBindingObserver {
   final logger = Logger();
   bool _locationDenied = false;
-  bool _isGenericLocationName(String name) {
-    final lower = name.toLowerCase().trim();
-    return lower.isEmpty ||
-        lower.startsWith('city of ') ||
-        lower.contains('metro') ||
-        lower.contains('metropolitan') ||
-        lower.contains('municipality') ||
-        lower.contains('district') ||
-        lower.contains('county') ||
-        lower.contains('province') ||
-        lower.contains('region');
-  }
 
   void _openLocationSearch() {
     Navigator.of(context).push(
@@ -190,7 +178,7 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen>
         data: (weather) {
           try {
             Widget buildLocationText() {
-              // Show exact location name from reverse geocoding, or selected location, or weather API name
+              // Show GPS/geocoder-derived label (not OpenWeather station name)
               if (selectedLocation != null) {
                 return Text(
                   selectedLocation,
@@ -201,26 +189,18 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen>
 
               if (locationNameAsync != null) {
                 return locationNameAsync.when(
-                  data: (name) {
-                    // Only use reverse geocoded name if it's not "Unknown Location"
-                    final displayName = (name != 'Unknown Location' &&
-                            name.isNotEmpty &&
-                            !_isGenericLocationName(name))
-                        ? name
-                        : weather.name;
-                    return Text(
-                      displayName,
-                      style: TextStyles.h1,
-                      overflow: TextOverflow.ellipsis,
-                    );
-                  },
+                  data: (name) => Text(
+                    name,
+                    style: TextStyles.h1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   loading: () => Text(
-                    weather.name,
+                    'Locating...',
                     style: TextStyles.h1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   error: (_, __) => Text(
-                    weather.name,
+                    'Current Location',
                     style: TextStyles.h1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -228,7 +208,7 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen>
               }
 
               return Text(
-                weather.name,
+                'Current Location',
                 style: TextStyles.h1,
                 overflow: TextOverflow.ellipsis,
               );

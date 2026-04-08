@@ -42,6 +42,9 @@ flutter_*.png
 # Firebase configuration files (contains sensitive API keys)
 **/google-services.json
 android/app/google-services.json
+**/GoogleService-Info.plist
+ios/Runner/GoogleService-Info.plist
+**/agconnect-services.json
 
 # Keystore files
 **/*.keystore
