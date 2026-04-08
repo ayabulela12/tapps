@@ -67,14 +67,14 @@ class _LocationSearchState extends ConsumerState<LocationSearch> {
     _debounceTimer = Timer(const Duration(milliseconds: 300), () async {
       ref.read(isLoadingProvider.notifier).state = true;
       try {
-        print('🔍 Searching for places with query: "$query"');
+        debugPrint('🔍 Searching for places with query: "$query"');
         final places = await ref.read(placesServiceProvider).searchPlaces(query);
         if (!mounted) return;
-        print('🔍 Found ${places.length} places: ${places.map((p) => p.mainText).toList()}');
+        debugPrint('🔍 Found ${places.length} places: ${places.map((p) => p.mainText).toList()}');
         ref.read(searchResultsProvider.notifier).state = places;
       } catch (e) {
         if (!mounted) return;
-        print('❌ Error searching places: $e');
+        debugPrint('❌ Error searching places: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error searching for places: $e'),

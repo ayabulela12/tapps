@@ -73,8 +73,8 @@ PACKAGE INFORMATION
 - Package Name: com.tapps.appmaniazar
 - Application ID: com.tapps.appmaniazar
 - Namespace: com.tapps.appmaniazar
-- Current Version Code: 8
-- Current Version Name: "5 (1.0.1)"
+- Current Version Code: 9
+- Current Version Name: "6 (1.0.2)"
 
 
 ================================================================================

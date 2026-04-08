@@ -102,6 +102,7 @@ class _WeatherLocationsScreenState
                     try {
                       await ApiHelper.getWeatherByCityName(city);
                     } catch (_) {
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('City not found. Please try a different city name.'),
@@ -114,6 +115,7 @@ class _WeatherLocationsScreenState
                         .read(savedLocationsProvider.notifier)
                         .addLocation(city);
                     _searchController.clear();
+                    if (!context.mounted) return;
                     FocusScope.of(context).unfocus();
                   },
                   decoration: InputDecoration(

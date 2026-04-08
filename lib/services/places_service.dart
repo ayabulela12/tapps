@@ -22,7 +22,7 @@ class PlacesService {
 
   Future<List<PlaceSearchResult>> searchPlaces(String query) async {
     try {
-      print('🔍 PlacesService.searchPlaces called with query: "$query"');
+      printInfo('🔍 PlacesService.searchPlaces called with query: "$query"');
       
       // Clean and normalize the query for better South African results
       String normalizedQuery = query.trim();
@@ -50,20 +50,20 @@ class PlacesService {
         'radius': '1000000',         // 1000km radius to cover entire country
       };
       
-      print('🔍 Making request to: $requestUrl');
-      print('🔍 Query params: ${queryParams.keys.map((k) => '$k=${queryParams[k]}').join('&')}');
+      printInfo('🔍 Making request to: $requestUrl');
+      printInfo('🔍 Query params: ${queryParams.keys.map((k) => '$k=${queryParams[k]}').join('&')}');
 
       final response = await _dio.get(
         requestUrl,
         queryParameters: queryParams,
       );
 
-      print('🔍 Response status: ${response.statusCode}');
-      print('🔍 Response data: ${response.data}');
+      printInfo('🔍 Response status: ${response.statusCode}');
+      printInfo('🔍 Response data: ${response.data}');
 
       if (response.statusCode == 200) {
         final predictions = response.data['predictions'] as List;
-        print('🔍 Raw predictions count: ${predictions.length}');
+        printInfo('🔍 Raw predictions count: ${predictions.length}');
         
         // Filter and prioritize results for better South African experience
         List<PlaceSearchResult> results = predictions
@@ -71,14 +71,14 @@ class PlacesService {
             .where((result) => _isRelevantSouthAfricanPlace(result))
             .toList();
             
-        print('🔍 Filtered results count: ${results.length}');
+        printInfo('🔍 Filtered results count: ${results.length}');
         
         // Sort results by relevance: suburbs > towns > provinces
         results.sort((a, b) => _comparePlaceRelevance(a, b));
         
         // Limit to top 10 most relevant results
         final finalResults = results.take(10).toList();
-        print('🔍 Final results: ${finalResults.map((r) => r.mainText).toList()}');
+        printInfo('🔍 Final results: ${finalResults.map((r) => r.mainText).toList()}');
         
         return finalResults;
       } else {

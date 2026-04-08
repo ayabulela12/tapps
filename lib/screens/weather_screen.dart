@@ -76,10 +76,8 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen>
       final selectedCoords = ref.read(selectedCoordinatesProvider);
       if (selectedCoords == null) {
         logger.i('🔄 App resumed; refreshing current location weather + name');
-        // Kick off refreshes without caring about the returned value.
-        // Using underscores avoids the "unused value" lint.
-        final _ = ref.refresh(currentWeatherProvider);
-        final __ = ref.refresh(currentLocationNameProvider);
+        ref.invalidate(currentWeatherProvider);
+        ref.invalidate(currentLocationNameProvider);
       }
     }
   }

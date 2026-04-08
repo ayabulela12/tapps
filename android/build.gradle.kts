@@ -1,19 +1,3 @@
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    
-    dependencies {
-        classpath("com.android.tools.build:gradle:8.1.0")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.10")
-        classpath("com.google.gms:google-services:4.4.1")
-        // Add the Crashlytics Gradle plugin
-        classpath("com.google.firebase:firebase-crashlytics-gradle:2.9.9")
-        classpath("com.google.firebase:perf-plugin:1.4.2")
-    }
-}
-
 allprojects {
     repositories {
         google()

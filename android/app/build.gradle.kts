@@ -37,8 +37,8 @@ android {
         applicationId = "com.tapps.appmaniazar"
         minSdk = flutter.minSdkVersion  // Updated to meet Flutter's minimum requirement
         targetSdk = 35
-        versionCode = 8
-        versionName = "5 (1.0.1)"
+        versionCode = 9
+        versionName = "6 (1.0.2)"
         multiDexEnabled = true
     }
     
