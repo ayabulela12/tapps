@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:appmaniazar/constants/app_colors.dart';
 import 'package:appmaniazar/models/province.dart';
-import 'package:appmaniazar/services/firebase_service.dart';
+import 'package:appmaniazar/services/supabase_dam_service.dart';
 import 'package:appmaniazar/views/gradient_container.dart';
 import 'package:appmaniazar/screens/province_details_screen.dart';
 
 final provincesProvider = StreamProvider<List<Province>>((ref) {
-  return ref.watch(firebaseServiceProvider).getProvinces();
+  return ref.watch(supabaseDamDataServiceProvider).getProvinces();
 });
 
 class ProvincesListScreen extends ConsumerWidget {

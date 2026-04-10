@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
 class ProvinceRecordException implements Exception {
@@ -40,16 +39,8 @@ class ProvinceRecord {
     }
   }
 
-  factory ProvinceRecord.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
-    if (!doc.exists) {
-      debugPrint('⚠️ Document does not exist');
-      throw ProvinceRecordException('Document does not exist');
-    }
-
+  factory ProvinceRecord.fromMap(Map<String, dynamic> data) {
     try {
-      final data = doc.data()!;
-      
-      // Helper function to parse double values
       double parseDouble(dynamic value, String fieldName) {
         if (value == null) {
           debugPrint('⚠️ Missing $fieldName, defaulting to 0.0');
@@ -63,9 +54,11 @@ class ProvinceRecord {
         }
       }
 
-      // Parse timestamp
-      final timestamp = (data['timestamp'] as Timestamp?)?.toDate() ?? 
-        DateTime.now().subtract(const Duration(days: 1));  // Default to yesterday if missing
+      final timestampRaw = data['timestamp'];
+      final timestamp = timestampRaw is String
+          ? (DateTime.tryParse(timestampRaw) ??
+              DateTime.now().subtract(const Duration(days: 1)))
+          : DateTime.now().subtract(const Duration(days: 1));
       
       return ProvinceRecord(
         thisWeekLevel: parseDouble(data['this_week_level'], 'this_week_level'),

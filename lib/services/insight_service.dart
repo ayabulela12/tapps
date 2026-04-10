@@ -1,7 +1,5 @@
 import 'package:appmaniazar/models/weather.dart';
 import 'package:appmaniazar/services/weather_service.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -120,9 +118,8 @@ class WeatherInsight {
 
 class InsightService {
   final Logger _logger = Logger();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   final WeatherService _weatherService = WeatherService();
+  final Map<String, WeatherInsight> _insights = <String, WeatherInsight>{};
 
   InsightService();
 
@@ -139,7 +136,7 @@ class InsightService {
 
       final insights = await _generateInsights(weather, position);
       
-      // Save insights to Firebase for personalization
+      // Save insights in-memory for current app session.
       await _saveInsights(insights, position);
       
       return insights;
@@ -728,23 +725,10 @@ class InsightService {
     Position position
   ) async {
     try {
-      final user = _auth.currentUser;
-      if (user == null) return;
-
-      final batch = _firestore.batch();
-      
       for (final insight in insights) {
-        final docRef = _firestore
-            .collection('users')
-            .doc(user.uid)
-            .collection('insights')
-            .doc(insight.id);
-        
-        batch.set(docRef, insight.toJson());
+        _insights[insight.id] = insight;
       }
-
-      await batch.commit();
-      _logger.i('✅ Saved ${insights.length} insights to Firebase');
+      _logger.i('✅ Saved ${insights.length} insights in memory');
     } catch (e) {
       _logger.e('❌ Failed to save insights: $e');
     }
@@ -752,21 +736,13 @@ class InsightService {
 
   Future<List<WeatherInsight>> getUserInsights() async {
     try {
-      final user = _auth.currentUser;
-      if (user == null) return [];
-
-      final snapshot = await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('insights')
-          .orderBy('priority', descending: false)
-          .orderBy('generatedAt', descending: true)
-          .get();
-
-      return snapshot.docs
-          .map((doc) => WeatherInsight.fromJson(doc.data()))
-          .where((insight) => insight.isValid)
-          .toList();
+      final all = _insights.values.where((insight) => insight.isValid).toList();
+      all.sort((a, b) {
+        final byPriority = a.priority.compareTo(b.priority);
+        if (byPriority != 0) return byPriority;
+        return b.generatedAt.compareTo(a.generatedAt);
+      });
+      return all;
     } catch (e) {
       _logger.e('❌ Failed to get user insights: $e');
       return [];
@@ -775,16 +751,10 @@ class InsightService {
 
   Future<void> markInsightAsViewed(String insightId) async {
     try {
-      final user = _auth.currentUser;
-      if (user == null) return;
-
-      await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('insights')
-          .doc(insightId)
-          .update({'viewed': true});
-      
+      if (_insights.containsKey(insightId)) {
+        _logger.i('✅ Insight marked as viewed: $insightId');
+        return;
+      }
       _logger.i('✅ Insight marked as viewed: $insightId');
     } catch (e) {
       _logger.e('❌ Failed to mark insight as viewed: $e');

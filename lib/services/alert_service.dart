@@ -2,21 +2,17 @@ import 'dart:async';
 import 'package:appmaniazar/models/weather.dart';
 import 'package:appmaniazar/models/weather_alert.dart';
 import 'package:appmaniazar/services/weather_service.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:logger/logger.dart';
 
 class AlertService {
   final Logger _logger = Logger();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   final WeatherService _weatherService = WeatherService();
   
   Timer? _alertCheckTimer;
-  StreamSubscription<QuerySnapshot>? _alertsSubscription;
   final StreamController<WeatherAlert> _alertStreamController = StreamController<WeatherAlert>.broadcast();
+  final List<WeatherAlert> _alerts = <WeatherAlert>[];
   
   // Alert generation thresholds
   static const double extremeTempThreshold = 40.0; // °C
@@ -34,52 +30,12 @@ class AlertService {
 
   Future<void> _initializeAlertService() async {
     try {
-      // Start listening for real-time alerts from Firebase
-      _startFirebaseAlertListener();
-      
       // Start periodic alert generation based on weather conditions
       _startPeriodicWeatherChecks();
       
       _logger.i('✅ Alert service initialized successfully');
     } catch (e) {
       _logger.e('❌ Failed to initialize alert service: $e');
-    }
-  }
-
-  void _startFirebaseAlertListener() {
-    final user = _auth.currentUser;
-    if (user == null) {
-      _logger.w('⚠️ No authenticated user - skipping Firebase alerts');
-      return;
-    }
-
-    _alertsSubscription = _firestore
-        .collection('users')
-        .doc(user.uid)
-        .collection('alerts')
-        .where('isActive', isEqualTo: true)
-        .orderBy('priority', descending: true)
-        .orderBy('issuedAt', descending: true)
-        .snapshots()
-        .listen((snapshot) {
-          _handleFirebaseAlerts(snapshot);
-        }, onError: (error) {
-          _logger.e('❌ Firebase alerts listener error: $error');
-        });
-  }
-
-  void _handleFirebaseAlerts(QuerySnapshot snapshot) {
-    for (final change in snapshot.docChanges) {
-      if (change.type == DocumentChangeType.added) {
-        final alertData = change.doc.data() as Map<String, dynamic>;
-        final alert = WeatherAlert.fromJson(alertData);
-        
-        // Only notify if alert is new and not read
-        if (!alert.isRead) {
-          _alertStreamController.add(alert);
-          _logger.i('🚨 New alert received: ${alert.title}');
-        }
-      }
     }
   }
 
@@ -159,7 +115,7 @@ class AlertService {
     // Weather condition alerts
     _generateWeatherConditionAlerts(weather, position, alerts);
 
-    // Save alerts to Firebase and notify
+    // Save alerts in-memory and notify
     for (final alert in alerts) {
       await _saveAlert(alert);
       _alertStreamController.add(alert);
@@ -336,33 +292,24 @@ class AlertService {
 
   Future<void> _saveAlert(WeatherAlert alert) async {
     try {
-      final user = _auth.currentUser;
-      if (user == null) return;
-
-      await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('alerts')
-          .doc(alert.id)
-          .set(alert.toJson());
-      
-      _logger.i('✅ Alert saved to Firebase: ${alert.title}');
+      _alerts.removeWhere((a) => a.id == alert.id);
+      _alerts.add(alert);
+      _alerts.sort((a, b) {
+        final byPriority = a.priority.priority.compareTo(b.priority.priority);
+        if (byPriority != 0) return byPriority;
+        return b.issuedAt.compareTo(a.issuedAt);
+      });
+      _logger.i('✅ Alert saved in memory: ${alert.title}');
     } catch (e) {
-      _logger.e('❌ Failed to save alert to Firebase: $e');
+      _logger.e('❌ Failed to save alert in memory: $e');
     }
   }
 
   Future<void> markAlertAsRead(String alertId) async {
     try {
-      final user = _auth.currentUser;
-      if (user == null) return;
-
-      await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('alerts')
-          .doc(alertId)
-          .update({'isRead': true});
+      final index = _alerts.indexWhere((a) => a.id == alertId);
+      if (index == -1) return;
+      _alerts[index] = _alerts[index].copyWith(isRead: true);
       
       _logger.i('✅ Alert marked as read: $alertId');
     } catch (e) {
@@ -372,15 +319,7 @@ class AlertService {
 
   Future<void> deleteAlert(String alertId) async {
     try {
-      final user = _auth.currentUser;
-      if (user == null) return;
-
-      await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('alerts')
-          .doc(alertId)
-          .delete();
+      _alerts.removeWhere((a) => a.id == alertId);
       
       _logger.i('✅ Alert deleted: $alertId');
     } catch (e) {
@@ -390,33 +329,11 @@ class AlertService {
 
   Future<List<WeatherAlert>> getUserAlerts({bool unreadOnly = false}) async {
     try {
-      final user = _auth.currentUser;
-      if (user == null) return [];
-
-      QuerySnapshot snapshot;
+      final active = _alerts.where((alert) => !alert.isExpired).toList();
       if (unreadOnly) {
-        snapshot = await _firestore
-            .collection('users')
-            .doc(user.uid)
-            .collection('alerts')
-            .where('isRead', isEqualTo: false)
-            .orderBy('priority', descending: true)
-            .orderBy('issuedAt', descending: true)
-            .get();
-      } else {
-        snapshot = await _firestore
-            .collection('users')
-            .doc(user.uid)
-            .collection('alerts')
-            .orderBy('priority', descending: true)
-            .orderBy('issuedAt', descending: true)
-            .get();
+        return active.where((alert) => !alert.isRead).toList();
       }
-
-      return snapshot.docs
-          .map((doc) => WeatherAlert.fromJson(doc.data() as Map<String, dynamic>))
-          .where((alert) => !alert.isExpired)
-          .toList();
+      return active;
     } catch (e) {
       _logger.e('❌ Failed to get user alerts: $e');
       return [];
@@ -452,7 +369,6 @@ class AlertService {
 
   void dispose() {
     _alertCheckTimer?.cancel();
-    _alertsSubscription?.cancel();
     _alertStreamController.close();
   }
 }

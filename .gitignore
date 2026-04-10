@@ -52,3 +52,7 @@ ios/Runner/GoogleService-Info.plist
 android/app/**/*.keystore
 android/app/**/*.jks
 **keys.properties
+
+# Supabase configuration files (contains sensitive API keys)
+lib/config/supabase_config.dart
+

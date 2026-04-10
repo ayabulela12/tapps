@@ -1,5 +1,5 @@
 import 'package:appmaniazar/constants/app_colors.dart';
-// import 'package:appmaniazar/services/firebase_service.dart'; // Temporarily disabled
+// import 'package:appmaniazar/services/supabase_dam_service.dart'; // Temporarily disabled
 import 'package:appmaniazar/views/gradient_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

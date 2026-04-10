@@ -40,6 +40,7 @@ dependencies:
   dio_web_adapter: ^2.1.1
   shared_preferences: ^2.2.2
   jiffy: ^6.2.1
+  
 
   # Location services
   geolocator: ^10.1.0
@@ -53,14 +54,10 @@ dependencies:
   lottie: ^3.3.2
   shimmer: ^3.0.0
 
-   # Firebase - Proven stable versions for iOS compatibility
-  firebase_core: ^2.15.1
-  firebase_auth: ^4.7.3
-  cloud_firestore: ^4.8.1
-  # firebase_database: ^12.0.1  # Temporarily disabled for iOS testing
-
   # Additional dependencies for alerts and insights
   intl: ^0.19.0
+  supabase_flutter: ^2.12.2
+  
 
 dev_dependencies:
   flutter_test:

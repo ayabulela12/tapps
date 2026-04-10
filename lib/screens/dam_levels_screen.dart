@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
-import 'package:appmaniazar/services/firebase_service.dart';
+import 'package:appmaniazar/services/supabase_dam_service.dart';
 import 'package:appmaniazar/views/gradient_container.dart';
 
 // Mock Stream Data for GrandTotalRecord

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:appmaniazar/constants/app_colors.dart';
 import 'package:appmaniazar/constants/text_styles.dart';
-import 'package:appmaniazar/services/firebase_service.dart';
+import 'package:appmaniazar/services/supabase_dam_service.dart';
 
 class ECDamsScreen extends ConsumerWidget {
   const ECDamsScreen({super.key});

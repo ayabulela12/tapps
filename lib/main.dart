@@ -1,19 +1,16 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
-// Using the existing FirebaseConfig from config/firebase_config.dart
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:appmaniazar/config/firebase_config.dart';
+import 'package:appmaniazar/config/supabase_config.dart';
 import 'package:appmaniazar/constants/app_colors.dart';
-import 'package:appmaniazar/services/alert_service.dart';
 import 'package:appmaniazar/screens/home_screen.dart';
 import 'package:appmaniazar/screens/pick_location_screen.dart';
 import 'package:appmaniazar/screens/provinces_screen.dart';
 import 'package:appmaniazar/screens/report_screen.dart';
 import 'package:appmaniazar/screens/search_screen.dart';
 import 'package:appmaniazar/screens/weather_screen.dart';
+import 'package:appmaniazar/services/alert_service.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,36 +23,14 @@ void main() async {
   ));
 
   try {
-    // Check if Firebase is already initialized (Android auto-initializes via google-services.json)
-    if (Firebase.apps.isEmpty) {
-      if (kIsWeb) {
-        // Web configuration - manual initialization required
-        await Firebase.initializeApp(
-          options: FirebaseConfig.webOptions,
-        );
-
-        // Configure Firestore settings with optimized cache and persistence
-        FirebaseFirestore.instance.settings = const Settings(
-          persistenceEnabled: true,
-          cacheSizeBytes: 10485760, // 10 MB cache limit
-        );
-      } else {
-        // Mobile configuration - initialize only if not already done by google-services.json
-        await Firebase.initializeApp();
-        
-        // Configure Firestore settings for mobile
-        FirebaseFirestore.instance.settings = const Settings(
-          persistenceEnabled: true,
-          cacheSizeBytes: 10485760, // 10 MB cache limit
-        );
-      }
-      debugPrint('✅ Firebase initialized successfully');
-    } else {
-      // Firebase already initialized (likely by google-services.json on Android)
-      debugPrint('✅ Firebase already initialized');
-    }
+    // Initialize Supabase
+    await Supabase.initialize(
+      url: SupabaseConfig.url,
+      anonKey: SupabaseConfig.anonKey,
+    );
+    debugPrint('✅ Supabase initialized successfully');
   } catch (e) {
-    debugPrint('❌ Failed to initialize Firebase: $e');
+    debugPrint('❌ Failed to initialize app services: $e');
     runApp(
       MaterialApp(
         home: Scaffold(
@@ -129,7 +104,6 @@ class MainApp extends StatelessWidget {
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         scaffoldBackgroundColor: AppColors.background,
-        platform: kIsWeb ? TargetPlatform.android : Theme.of(context).platform,
       ),
       routes: {
         '/': (context) => const MainScreen(),

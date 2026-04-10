@@ -10,7 +10,7 @@ import 'package:appmaniazar/screens/nc_dams_screen.dart';
 import 'package:appmaniazar/screens/nelson_mandela_metro_screen.dart';
 import 'package:appmaniazar/screens/nw_dams_screen.dart';
 import 'package:appmaniazar/screens/wc_dams_screen.dart';
-import 'package:appmaniazar/services/firebase_service.dart';
+import 'package:appmaniazar/services/supabase_dam_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -492,7 +492,7 @@ class ProvinceDetailsScreen extends ConsumerWidget {
 // import 'package:appmaniazar/screens/city_of_cape_town_screen.dart';
 // import 'package:appmaniazar/screens/nelson_mandela_metro_screen.dart';
 // import 'package:appmaniazar/screens/ethekwini_municipality_screen.dart';
-// import 'package:appmaniazar/services/firebase_service.dart';
+// import 'package:appmaniazar/services/supabase_dam_service.dart';
 // import 'package:appmaniazar/views/gradient_container.dart';
 
 // class ProvinceDetailsScreen extends ConsumerWidget {
