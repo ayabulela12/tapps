@@ -353,9 +353,9 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen>
                     const SizedBox(height: 16),
                     WeatherInfo(weather: weather),
                     const SizedBox(height: 16),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: WeatherTips(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: WeatherTips(weather: weather),
                     ),
                     const SizedBox(height: 16),
                     // Real-time Alerts and Insights Panel
@@ -370,13 +370,67 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen>
             );
           } catch (e) {
             logger.e('Error building weather UI: $e');
-            return const WeatherSkeleton();
+            return const WeatherSkeleton(
+              statusText: 'Preparing your weather dashboard...',
+              hintText: 'Still loading. Please wait a moment.',
+            );
           }
         },
-        loading: () => const WeatherSkeleton(),
+        loading: () => const WeatherSkeleton(
+          statusText: 'Loading current weather...',
+          hintText: 'We are fetching live updates for your selected location.',
+        ),
         error: (error, stackTrace) {
           logger.e('Error loading weather data: $error');
-          return const WeatherSkeleton();
+          return GradientContainer(
+            child: SafeArea(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.cloud_off,
+                        color: Colors.white70,
+                        size: 52,
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Unable to load weather right now.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Please check your connection and try again.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white70, fontSize: 14),
+                      ),
+                      const SizedBox(height: 18),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          if (selectedCoordinates != null) {
+                            ref.invalidate(
+                              weatherByCoordinatesProvider(selectedCoordinates),
+                            );
+                          } else {
+                            ref.invalidate(currentWeatherProvider);
+                          }
+                        },
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Try Again'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
         },
       ),
     );

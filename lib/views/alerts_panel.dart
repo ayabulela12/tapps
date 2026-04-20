@@ -1,7 +1,8 @@
 import 'package:appmaniazar/constants/app_colors.dart';
 import 'package:appmaniazar/models/weather_alert.dart';
+import 'package:appmaniazar/models/weather.dart';
+import 'package:appmaniazar/providers/current_weather_provider.dart';
 import 'package:appmaniazar/services/alert_service.dart';
-import 'package:appmaniazar/services/insight_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -130,7 +131,7 @@ class _AlertsPanelState extends ConsumerState<AlertsPanel>
                 ),
                 tabs: const [
                   Tab(text: 'Active Alerts'),
-                  Tab(text: 'Insights'),
+                  Tab(text: 'Today'),
                 ],
               ),
             ),
@@ -142,7 +143,7 @@ class _AlertsPanelState extends ConsumerState<AlertsPanel>
                 controller: _tabController,
                 children: [
                   _buildAlertsTab(alertsAsync),
-                  _buildInsightsTab(),
+                  _buildTodayTab(),
                 ],
               ),
             ),
@@ -381,252 +382,155 @@ class _AlertsPanelState extends ConsumerState<AlertsPanel>
     );
   }
 
-  Widget _buildInsightsTab() {
-    return Consumer(
-      builder: (context, ref, child) {
-        final insightsAsync = ref.watch(userInsightsProvider);
-
-        return insightsAsync.when(
-          loading: () => const Center(
-            child: CircularProgressIndicator(color: Colors.white),
+  Widget _buildTodayTab() {
+    final weatherAsync = ref.watch(currentWeatherProvider);
+    return weatherAsync.when(
+      loading: () => const Center(
+        child: CircularProgressIndicator(color: Colors.white),
+      ),
+      error: (_, __) => Center(
+        child: Text(
+          'Unable to load today updates',
+          style: GoogleFonts.outfit(
+            color: Colors.white70,
+            fontSize: 14,
           ),
-          error: (error, stack) => Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  color: Colors.white70,
-                  size: 48,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Error loading insights',
-                  style: GoogleFonts.outfit(
-                    color: Colors.white70,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          data: (insights) {
-            if (insights.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.lightbulb_outline,
-                      color: Colors.white70,
-                      size: 48,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No insights available',
-                      style: GoogleFonts.outfit(
-                        color: Colors.white,
-                        fontSize: 16,
-                      ),
-                    ),
-                    Text(
-                      'Check back later for personalized insights',
-                      style: GoogleFonts.outfit(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        ref.invalidate(generateInsightsProvider);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white.withValues(alpha: 0.2),
-                        foregroundColor: Colors.white,
-                      ),
-                      child: Text(
-                        'Generate Insights',
-                        style: GoogleFonts.outfit(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            return ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: insights.length,
-              itemBuilder: (context, index) {
-                final insight = insights[index];
-                return _buildInsightCard(insight);
-              },
-            );
-          },
+        ),
+      ),
+      data: (weather) {
+        final updates = _buildTodayUpdates(weather);
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: updates.length,
+          itemBuilder: (context, index) => _buildTodayUpdateCard(updates[index]),
         );
       },
     );
   }
 
-  Widget _buildInsightCard(WeatherInsight insight) {
+  List<_TodayUpdate> _buildTodayUpdates(Weather weather) {
+    final updates = <_TodayUpdate>[];
+    final condition = weather.weather.isNotEmpty ? weather.weather.first.main.toLowerCase() : '';
+    final description = weather.weather.isNotEmpty ? weather.weather.first.description : 'current conditions';
+
+    updates.add(
+      _TodayUpdate(
+        title: 'Today Summary',
+        subtitle:
+            '${weather.temperature.toStringAsFixed(0)}°C now, feels like ${weather.main.feelsLike.toStringAsFixed(0)}°C, $description.',
+        icon: Icons.today,
+        color: Colors.lightBlueAccent,
+      ),
+    );
+
+    if (condition.contains('rain') || condition.contains('thunderstorm')) {
+      updates.add(
+        const _TodayUpdate(
+          title: 'Outdoor Plan',
+          subtitle: 'Rain risk is elevated. Plan outdoor tasks earlier and keep rain gear ready.',
+          icon: Icons.umbrella,
+          color: Colors.cyanAccent,
+        ),
+      );
+    } else {
+      updates.add(
+        const _TodayUpdate(
+          title: 'Outdoor Plan',
+          subtitle: 'Conditions are fairly stable for outdoor activity right now.',
+          icon: Icons.directions_walk,
+          color: Colors.greenAccent,
+        ),
+      );
+    }
+
+    if (weather.windSpeed >= 35) {
+      updates.add(
+        _TodayUpdate(
+          title: 'Travel Note',
+          subtitle:
+              'Strong winds (${weather.windSpeed.toStringAsFixed(0)} km/h). Drive carefully and secure loose items.',
+          icon: Icons.air,
+          color: Colors.orangeAccent,
+        ),
+      );
+    } else if (weather.visibilityInKm > 0 && weather.visibilityInKm <= 3) {
+      updates.add(
+        _TodayUpdate(
+          title: 'Travel Note',
+          subtitle:
+              'Reduced visibility (${weather.visibilityInKm.toStringAsFixed(1)} km). Use headlights and leave extra space.',
+          icon: Icons.visibility_off,
+          color: Colors.amberAccent,
+        ),
+      );
+    } else {
+      updates.add(
+        const _TodayUpdate(
+          title: 'Travel Note',
+          subtitle: 'No major travel disruptions indicated at the moment.',
+          icon: Icons.directions_car,
+          color: Colors.white70,
+        ),
+      );
+    }
+
+    return updates;
+  }
+
+  Widget _buildTodayUpdateCard(_TodayUpdate update) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: insight.category.color.withValues(alpha: 0.3),
+          color: update.color.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
-      child: ExpansionTile(
+      child: ListTile(
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: insight.category.color.withValues(alpha: 0.2),
+            color: update.color.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
-            insight.category.icon,
-            color: insight.category.color,
-            size: 20,
-          ),
+          child: Icon(update.icon, color: update.color, size: 20),
         ),
         title: Text(
-          insight.title,
+          update.title,
           style: GoogleFonts.outfit(
             color: Colors.white,
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
         ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text(
-              insight.category.displayName,
-              style: GoogleFonts.outfit(
-                color: insight.category.color,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              insight.timeAgo,
-              style: GoogleFonts.outfit(
-                color: Colors.white70,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.1),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  insight.description,
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontSize: 14,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: insight.category.color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: insight.category.color.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '💡 Recommendation',
-                        style: GoogleFonts.outfit(
-                          color: insight.category.color,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        insight.recommendation,
-                        style: GoogleFonts.outfit(
-                          color: Colors.white,
-                          fontSize: 13,
-                          height: 1.3,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (insight.actionItems != null && insight.actionItems!.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    '📋 Action Items:',
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  ...insight.actionItems!.map((action) => Padding(
-                    padding: const EdgeInsets.only(bottom: 2),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '• ',
-                          style: GoogleFonts.outfit(
-                            color: insight.category.color,
-                            fontSize: 12,
-                          ),
-                        ),
-                        Expanded(
-                          child: Text(
-                            action,
-                            style: GoogleFonts.outfit(
-                              color: Colors.white70,
-                              fontSize: 12,
-                              height: 1.3,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )),
-                ],
-                const SizedBox(height: 8),
-                Text(
-                  insight.validUntilText,
-                  style: GoogleFonts.outfit(
-                    color: Colors.white60,
-                    fontSize: 11,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ],
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            update.subtitle,
+            style: GoogleFonts.outfit(
+              color: Colors.white70,
+              fontSize: 12,
+              height: 1.35,
             ),
           ),
-        ],
+        ),
       ),
     );
   }
+}
+
+class _TodayUpdate {
+  const _TodayUpdate({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
 }

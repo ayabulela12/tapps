@@ -1,49 +1,119 @@
 import 'package:appmaniazar/constants/text_styles.dart';
+import 'package:appmaniazar/models/weather.dart';
 import 'package:flutter/material.dart';
 
 class WeatherTips extends StatelessWidget {
-  const WeatherTips({super.key});
+  const WeatherTips({super.key, required this.weather});
+
+  final Weather weather;
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    final tips = _buildDynamicTips(weather);
+
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
+        const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16),
           child: Text('Weather Tips', style: TextStyles.h2),
         ),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          padding: EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
-            children: [
-              WeatherTipCard(
-                title: 'UV Protection',
-                description: 'High UV levels today. Use sunscreen and wear protective clothing.',
-                icon: Icons.wb_sunny,
-                color: Colors.orange,
-              ),
-              SizedBox(width: 12),
-              WeatherTipCard(
-                title: 'Stay Hydrated',
-                description: 'Remember to drink plenty of water throughout the day.',
-                icon: Icons.water_drop,
-                color: Colors.blue,
-              ),
-              SizedBox(width: 12),
-              WeatherTipCard(
-                title: 'Outdoor Activity',
-                description: 'Great conditions for outdoor activities in the afternoon.',
-                icon: Icons.directions_walk,
-                color: Colors.green,
-              ),
-            ],
+            children: List.generate(tips.length, (index) {
+              return Padding(
+                padding: EdgeInsets.only(right: index == tips.length - 1 ? 0 : 12),
+                child: tips[index],
+              );
+            }),
           ),
         ),
       ],
     );
+  }
+
+  List<WeatherTipCard> _buildDynamicTips(Weather weather) {
+    final condition = weather.weather.isNotEmpty ? weather.weather.first.main.toLowerCase() : '';
+    final tips = <WeatherTipCard>[];
+
+    if (condition.contains('thunderstorm')) {
+      tips.add(
+        const WeatherTipCard(
+          title: 'Storm Safety',
+          description: 'Thunderstorms detected. Stay indoors and avoid open areas and metal structures.',
+          icon: Icons.thunderstorm,
+          color: Colors.redAccent,
+        ),
+      );
+    }
+
+    if (condition.contains('rain') || condition.contains('drizzle')) {
+      tips.add(
+        const WeatherTipCard(
+          title: 'Rain Ready',
+          description: 'Rain is expected. Carry rain gear and avoid low-lying flood-prone routes.',
+          icon: Icons.umbrella,
+          color: Colors.lightBlueAccent,
+        ),
+      );
+    }
+
+    if (weather.main.feelsLike >= 32 || weather.temperature >= 30) {
+      tips.add(
+        const WeatherTipCard(
+          title: 'Heat Precaution',
+          description: 'Hot conditions today. Hydrate often and reduce intense outdoor activity at midday.',
+          icon: Icons.thermostat,
+          color: Colors.orange,
+        ),
+      );
+    }
+
+    if (weather.windSpeed >= 35) {
+      tips.add(
+        const WeatherTipCard(
+          title: 'Wind Advisory',
+          description: 'Strong winds expected. Secure loose outdoor items and drive carefully.',
+          icon: Icons.air,
+          color: Colors.cyanAccent,
+        ),
+      );
+    }
+
+    if (weather.visibilityInKm > 0 && weather.visibilityInKm <= 3) {
+      tips.add(
+        const WeatherTipCard(
+          title: 'Low Visibility',
+          description: 'Visibility is reduced. Use headlights and leave extra stopping distance.',
+          icon: Icons.visibility_off,
+          color: Colors.amber,
+        ),
+      );
+    }
+
+    if (tips.isEmpty) {
+      tips.add(
+        const WeatherTipCard(
+          title: 'Stable Conditions',
+          description: 'Conditions look stable right now. It is a good time for routine outdoor tasks.',
+          icon: Icons.check_circle_outline,
+          color: Colors.greenAccent,
+        ),
+      );
+      tips.add(
+        const WeatherTipCard(
+          title: 'Stay Prepared',
+          description: 'Carry water and check updates later in case local conditions shift.',
+          icon: Icons.info_outline,
+          color: Colors.blueAccent,
+        ),
+      );
+    }
+
+    return tips.take(3).toList();
   }
 }
 

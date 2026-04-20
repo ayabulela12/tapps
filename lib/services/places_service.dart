@@ -23,6 +23,22 @@ class PlacesService {
   String coordinatesLabel(double lat, double lon) =>
       '${lat.toStringAsFixed(4)}, ${lon.toStringAsFixed(4)}';
 
+  String _sanitizeAreaOnly(String label) {
+    final normalized = normalizeLocationLabel(label);
+    if (normalized.isEmpty) return '';
+
+    // Keep only the first segment (area/suburb) and drop city/address detail.
+    final first = normalized.split(',').first.trim();
+    if (first.isEmpty) return '';
+
+    // Remove obvious house numbers to avoid exact-location exposure.
+    final noNumbers = first.replaceAll(RegExp(r'\b\d+[A-Za-z]?\b'), '').trim();
+    final collapsed = noNumbers.replaceAll(RegExp(r'\s+'), ' ').trim();
+
+    if (collapsed.isEmpty || isGenericLocationName(collapsed)) return '';
+    return collapsed;
+  }
+
   bool isGenericLocationName(String name) {
     final lower = name.toLowerCase().trim();
     return lower.isEmpty ||
@@ -56,36 +72,17 @@ class PlacesService {
 
   String? formatPlacemarkLabel(Placemark place) {
     String? nz(String? v) => (v == null || v.trim().isEmpty) ? null : v.trim();
-    final road = nz(place.thoroughfare) ?? nz(place.street);
-    final house = nz(place.subThoroughfare);
     final suburb = nz(place.subLocality);
-    final town = nz(place.locality) ?? nz(place.subAdministrativeArea);
+    final neighborhood = nz(place.subAdministrativeArea);
+    final town = nz(place.locality);
     final admin = nz(place.administrativeArea);
 
-    String candidate;
-    if (road != null && house != null && suburb != null) {
-      candidate = '$road $house, $suburb';
-    } else if (road != null && house != null && town != null) {
-      candidate = '$road $house, $town';
-    } else if (road != null && suburb != null) {
-      candidate = '$road, $suburb';
-    } else if (road != null && town != null) {
-      candidate = '$road, $town';
-    } else if (suburb != null && town != null) {
-      candidate = '$suburb, $town';
-    } else if (suburb != null) {
-      candidate = suburb;
-    } else if (town != null) {
-      candidate = town;
-    } else if (admin != null) {
-      candidate = admin;
-    } else {
-      return null;
-    }
+    final candidate = suburb ?? neighborhood ?? town ?? admin;
+    if (candidate == null) return null;
 
-    final normalized = normalizeLocationLabel(candidate);
-    if (normalized.isEmpty || isGenericLocationName(normalized)) return null;
-    return normalized;
+    final areaOnly = _sanitizeAreaOnly(candidate);
+    if (areaOnly.isEmpty) return null;
+    return areaOnly;
   }
 
   Future<String> resolvePreferredLocationLabel(
@@ -100,29 +97,30 @@ class PlacesService {
 
     final googleOrFallback = await reverseGeocode(lat, lon);
     if (googleOrFallback != null && googleOrFallback.trim().isNotEmpty) {
-      final normalized = normalizeLocationLabel(googleOrFallback);
-      if (!isGenericLocationName(normalized)) return normalized;
+      final areaOnly = _sanitizeAreaOnly(googleOrFallback);
+      if (areaOnly.isNotEmpty) return areaOnly;
     }
 
     final nom = await reverseGeocodeNominatim(lat, lon);
     final nomName = nom?['name'] as String?;
     if (nomName != null && nomName.trim().isNotEmpty) {
-      final normalized = normalizeLocationLabel(nomName);
-      if (!isGenericLocationName(normalized)) return normalized;
+      final areaOnly = _sanitizeAreaOnly(nomName);
+      if (areaOnly.isNotEmpty) return areaOnly;
     }
 
     final over = await reverseGeocodeOverpass(lat, lon);
     final overName = over?['name'] as String?;
     if (overName != null && overName.trim().isNotEmpty) {
-      final normalized = normalizeLocationLabel(overName);
-      if (!isGenericLocationName(normalized)) return normalized;
+      final areaOnly = _sanitizeAreaOnly(overName);
+      if (areaOnly.isNotEmpty) return areaOnly;
     }
 
     // If network geocoders could not provide suburb/city, keep native
     // street-level label as a better fallback than raw coordinates.
     if (nativeLabel != null) return nativeLabel;
 
-    return coordinatesLabel(lat, lon);
+    // Never expose raw coordinates in user-facing weather location labels.
+    return 'Current Area';
   }
 
   Future<List<PlaceSearchResult>> searchPlaces(String query) async {

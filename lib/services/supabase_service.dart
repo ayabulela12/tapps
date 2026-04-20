@@ -11,7 +11,7 @@ class DamRecord {
   final double lastWeekLevel;
   final double lastYearLevel;
   final String risk;
-  final DateTime timestamp;
+  final DateTime created_at;
 
   DamRecord({
     required this.id,
@@ -21,7 +21,7 @@ class DamRecord {
     required this.lastWeekLevel,
     required this.lastYearLevel,
     required this.risk,
-    required this.timestamp,
+    required this.created_at,
   });
 
   factory DamRecord.fromMap(Map<String, dynamic> map) {
@@ -30,7 +30,7 @@ class DamRecord {
     final yearlyChange = (map['yearly_change'] as num?)?.toDouble() ?? 0.0;
 
     final rawId = map['id'];
-    final rawTimestamp = map['timestamp'];
+    final rawTimestamp = map['created_at'];
 
     return DamRecord(
       id: rawId?.toString() ?? '',
@@ -40,7 +40,7 @@ class DamRecord {
       lastWeekLevel: level - weeklyChange,
       lastYearLevel: level - yearlyChange,
       risk: map['risk'] as String? ?? '',
-      timestamp: rawTimestamp is String
+      created_at: rawTimestamp is String
           ? (DateTime.tryParse(rawTimestamp) ?? DateTime.now())
           : DateTime.now(),
     );
@@ -89,9 +89,9 @@ class SupabaseDamService {
         seen[key] = row;
       } else {
         final existing =
-            DateTime.tryParse(seen[key]!['timestamp'] as String? ?? '') ??
+            DateTime.tryParse(seen[key]!['created_at'] as String? ?? '') ??
                 DateTime(0);
-        final current = DateTime.tryParse(row['timestamp'] as String? ?? '') ??
+        final current = DateTime.tryParse(row['created_at'] as String? ?? '') ??
             DateTime(0);
         if (current.isAfter(existing)) {
           seen[key] = row;
@@ -106,7 +106,7 @@ class SupabaseDamService {
       final rows = await _client
           .from(_damTable)
           .select()
-          .order('timestamp', ascending: false);
+          .order('created_at', ascending: false);
 
       final deduped = _dedupe(List<Map<String, dynamic>>.from(rows as List));
       debugPrint('✅ Supabase: fetched ${deduped.length} unique dams');
@@ -124,7 +124,7 @@ class SupabaseDamService {
           .from(_damTable)
           .select()
           .eq('region', regionName)
-          .order('timestamp', ascending: false);
+          .order('created_at', ascending: false);
 
       final deduped = _dedupe(List<Map<String, dynamic>>.from(rows as List));
       debugPrint('✅ Supabase: fetched ${deduped.length} dams for $regionName');
@@ -135,8 +135,13 @@ class SupabaseDamService {
     }
   }
 
-  Future<({double thisWeek, double lastWeek, double lastYear, DateTime timestamp})>
-      getNationalTotals() async {
+  Future<
+      ({
+        double thisWeek,
+        double lastWeek,
+        double lastYear,
+        DateTime timestamp
+      })> getNationalTotals() async {
     final dams = await getAllDams();
     if (dams.isEmpty) {
       return (
@@ -154,7 +159,7 @@ class SupabaseDamService {
     final lastYear =
         dams.map((d) => d.lastYearLevel).reduce((a, b) => a + b) / dams.length;
     final latest =
-        dams.map((d) => d.timestamp).reduce((a, b) => a.isAfter(b) ? a : b);
+        dams.map((d) => d.created_at).reduce((a, b) => a.isAfter(b) ? a : b);
 
     return (
       thisWeek: _clampPercent(thisWeek),
@@ -182,7 +187,7 @@ class SupabaseDamService {
     final lastYear =
         dams.map((d) => d.lastYearLevel).reduce((a, b) => a + b) / dams.length;
     final latest =
-        dams.map((d) => d.timestamp).reduce((a, b) => a.isAfter(b) ? a : b);
+        dams.map((d) => d.created_at).reduce((a, b) => a.isAfter(b) ? a : b);
 
     return ProvinceRecord(
       thisWeekLevel: _clampPercent(thisWeek),
@@ -198,7 +203,7 @@ class SupabaseDamService {
           .from(_damTable)
           .select()
           .ilike('dam', damName.trim())
-          .order('timestamp', ascending: false)
+          .order('created_at', ascending: false)
           .limit(1);
 
       final list = List<Map<String, dynamic>>.from(rows as List);
@@ -216,7 +221,7 @@ class SupabaseDamService {
           .from(_damTable)
           .select()
           .eq('id', damId)
-          .order('timestamp', ascending: false)
+          .order('created_at', ascending: false)
           .limit(1)
           .maybeSingle();
       if (row == null) return null;
@@ -231,4 +236,3 @@ class SupabaseDamService {
 final supabaseDamServiceProvider = Provider<SupabaseDamService>((ref) {
   return SupabaseDamService();
 });
-

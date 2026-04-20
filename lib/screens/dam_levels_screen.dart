@@ -46,7 +46,7 @@ class DamLevelsScreen extends ConsumerWidget {
                   children: [
                     const SizedBox(height: 10),
                     Text(
-                      'Total for All Dams',
+                      'Total Dam Water Level (All Dams)',
                       style: GoogleFonts.outfit(
                         color: Colors.white,
                         fontSize: 28,
@@ -134,19 +134,19 @@ class DamLevelsScreen extends ConsumerWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           _buildLevelCard(
-                            'Level This Week',
+                            'This Week',
                             record.thisWeekLevel,
                             _getWaterLevelColor(record.thisWeekLevel),
                           ),
                           const SizedBox(height: 16),
                           _buildLevelCard(
-                            'Level Last Week',
+                            'Last Week',
                             record.lastWeekLevel,
                             _getWaterLevelColor(record.lastWeekLevel),
                           ),
                           const SizedBox(height: 16),
                           _buildLevelCard(
-                            'Level Last Year',
+                            'Last Year',
                             record.lastYearLevel,
                             _getWaterLevelColor(record.lastYearLevel),
                           ),

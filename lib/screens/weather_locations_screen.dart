@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:appmaniazar/constants/brand_colors.dart';
 import 'package:appmaniazar/constants/text_styles.dart';
 import 'package:appmaniazar/providers/current_weather_provider.dart';
 import 'package:appmaniazar/providers/get_weather_by_city_provider.dart';
 import 'package:appmaniazar/providers/saved_locations_provider.dart';
 import 'package:appmaniazar/services/api_helper.dart';
+import 'package:appmaniazar/services/places_service.dart';
 import 'package:appmaniazar/utils/get_weather_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,9 +22,83 @@ class WeatherLocationsScreen extends ConsumerStatefulWidget {
 class _WeatherLocationsScreenState
     extends ConsumerState<WeatherLocationsScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final PlacesService _placesService = PlacesService();
+  Timer? _debounce;
+  List<PlaceSearchResult> _suggestions = [];
+  bool _isSearchingSuggestions = false;
+  int _searchVersion = 0;
+
+  Future<void> _submitLocationQuery(String raw) async {
+    final query = raw.trim();
+    if (query.isEmpty) return;
+
+    // Validate against OpenWeather before saving: if we can't
+    // resolve this city/area name to weather data, don't add a card.
+    try {
+      await ApiHelper.getWeatherByCityName(query);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('City or area not found. Please try a different name.'),
+        ),
+      );
+      return;
+    }
+
+    ref.read(savedLocationsProvider.notifier).addLocation(query);
+    _searchController.clear();
+    setState(() {
+      _suggestions = [];
+    });
+    if (!mounted) return;
+    FocusScope.of(context).unfocus();
+  }
+
+  void _onQueryChanged(String value) {
+    _debounce?.cancel();
+
+    if (value.trim().length < 2) {
+      if (mounted) {
+        setState(() {
+          _suggestions = [];
+          _isSearchingSuggestions = false;
+        });
+      }
+      return;
+    }
+
+    _debounce = Timer(const Duration(milliseconds: 300), () async {
+      final int localVersion = ++_searchVersion;
+      if (mounted) {
+        setState(() {
+          _isSearchingSuggestions = true;
+        });
+      }
+
+      try {
+        final results = await _placesService.searchPlaces(value.trim());
+        if (!mounted || localVersion != _searchVersion) return;
+        setState(() {
+          _suggestions = results;
+        });
+      } catch (_) {
+        if (!mounted || localVersion != _searchVersion) return;
+        setState(() {
+          _suggestions = [];
+        });
+      } finally {
+        if (!mounted || localVersion != _searchVersion) return;
+        setState(() {
+          _isSearchingSuggestions = false;
+        });
+      }
+    });
+  }
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -69,57 +146,10 @@ class _WeatherLocationsScreenState
                 child: TextField(
                   controller: _searchController,
                   textInputAction: TextInputAction.search,
-                  onSubmitted: (value) async {
-                    final city = value.trim();
-                    if (city.isEmpty) return;
-                    // Known South African provinces – we don't want to add these
-                    // as "cities", so show a friendly error instead.
-                    const provinces = {
-                      'western cape',
-                      'eastern cape',
-                      'northern cape',
-                      'gauteng',
-                      'limpopo',
-                      'mpumalanga',
-                      'north west',
-                      'free state',
-                      'kwa zulu natal',
-                      'kwazulu-natal',
-                    };
-
-                    final lower = city.toLowerCase();
-                    if (provinces.contains(lower)) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('City not found. Please search for a city or town, not a province.'),
-                        ),
-                      );
-                      return;
-                    }
-
-                    // Validate against OpenWeather before saving: if we can't
-                    // resolve this name to weather data, don't add a card.
-                    try {
-                      await ApiHelper.getWeatherByCityName(city);
-                    } catch (_) {
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('City not found. Please try a different city name.'),
-                        ),
-                      );
-                      return;
-                    }
-
-                    ref
-                        .read(savedLocationsProvider.notifier)
-                        .addLocation(city);
-                    _searchController.clear();
-                    if (!context.mounted) return;
-                    FocusScope.of(context).unfocus();
-                  },
+                  onChanged: _onQueryChanged,
+                  onSubmitted: _submitLocationQuery,
                   decoration: InputDecoration(
-                    hintText: 'Search for a city',
+                    hintText: 'Search city or area',
                     hintStyle: TextStyles.subtitleText,
                     prefixIcon:
                         const Icon(Icons.search, color: Colors.white70),
@@ -135,12 +165,56 @@ class _WeatherLocationsScreenState
                   style: TextStyles.bodyText,
                 ),
               ),
+              if (_isSearchingSuggestions)
+                const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  ),
+                ),
+              if (_suggestions.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                  constraints: const BoxConstraints(maxHeight: 220),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: _suggestions.length,
+                    separatorBuilder: (_, __) =>
+                        Divider(height: 1, color: Colors.white.withValues(alpha: 0.15)),
+                    itemBuilder: (context, index) {
+                      final suggestion = _suggestions[index];
+                      return ListTile(
+                        dense: true,
+                        leading: const Icon(Icons.location_on_outlined, color: Colors.white70, size: 20),
+                        title: Text(
+                          suggestion.mainText,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Text(
+                          suggestion.secondaryText,
+                          style: const TextStyle(color: Colors.white70, fontSize: 12),
+                        ),
+                        onTap: () {
+                          _searchController.text = suggestion.mainText;
+                          _submitLocationQuery(suggestion.mainText);
+                        },
+                      );
+                    },
+                  ),
+                ),
               const SizedBox(height: 8),
               Expanded(
                 child: savedLocations.isEmpty
                     ? const Center(
                         child: Text(
-                          'No locations yet.\nSearch to add a city.',
+                          'No locations yet.\nSearch to add a city or area.',
                           style: TextStyles.subtitleText,
                           textAlign: TextAlign.center,
                         ),

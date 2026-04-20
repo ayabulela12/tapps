@@ -127,9 +127,9 @@ class _MainScreenState extends State<MainScreen> {
 
   static final List<Widget> _screens = [
     const HomeScreen(),
-    const WeatherScreen(),
     const ProvincesScreen(),
-     const ReportScreen(),
+    const WeatherScreen(),
+    const ReportScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -196,13 +196,13 @@ class _MainScreenState extends State<MainScreen> {
               label: 'Home',
             ),
             BottomNavigationBarItem(
-              icon: _buildWeatherTabIcon(),
-              label: 'Weather',
-            ),
-            BottomNavigationBarItem(
               icon: Icon(Icons.location_on_outlined, size: 28),
               activeIcon: Icon(Icons.location_on, size: 28),
-              label: 'Provinces',
+              label: 'Province',
+            ),
+            BottomNavigationBarItem(
+              icon: _buildWeatherTabIcon(),
+              label: 'Weather',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.report_outlined, size: 28),
