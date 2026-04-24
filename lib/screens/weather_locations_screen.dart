@@ -88,10 +88,11 @@ class _WeatherLocationsScreenState
           _suggestions = [];
         });
       } finally {
-        if (!mounted || localVersion != _searchVersion) return;
-        setState(() {
-          _isSearchingSuggestions = false;
-        });
+        if (mounted && localVersion == _searchVersion) {
+          setState(() {
+            _isSearchingSuggestions = false;
+          });
+        }
       }
     });
   }
@@ -151,16 +152,14 @@ class _WeatherLocationsScreenState
                   decoration: InputDecoration(
                     hintText: 'Search city or area',
                     hintStyle: TextStyles.subtitleText,
-                    prefixIcon:
-                        const Icon(Icons.search, color: Colors.white70),
+                    prefixIcon: const Icon(Icons.search, color: Colors.white70),
                     filled: true,
                     fillColor: Colors.white.withValues(alpha: 0.1),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(24),
                       borderSide: BorderSide.none,
                     ),
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                   ),
                   style: TextStyles.bodyText,
                 ),
@@ -171,7 +170,8 @@ class _WeatherLocationsScreenState
                   child: SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white),
                   ),
                 ),
               if (_suggestions.isNotEmpty)
@@ -181,25 +181,29 @@ class _WeatherLocationsScreenState
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                    border:
+                        Border.all(color: Colors.white.withValues(alpha: 0.2)),
                   ),
                   child: ListView.separated(
                     shrinkWrap: true,
                     itemCount: _suggestions.length,
-                    separatorBuilder: (_, __) =>
-                        Divider(height: 1, color: Colors.white.withValues(alpha: 0.15)),
+                    separatorBuilder: (_, __) => Divider(
+                        height: 1, color: Colors.white.withValues(alpha: 0.15)),
                     itemBuilder: (context, index) {
                       final suggestion = _suggestions[index];
                       return ListTile(
                         dense: true,
-                        leading: const Icon(Icons.location_on_outlined, color: Colors.white70, size: 20),
+                        leading: const Icon(Icons.location_on_outlined,
+                            color: Colors.white70, size: 20),
                         title: Text(
                           suggestion.mainText,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                              color: Colors.white, fontWeight: FontWeight.w600),
                         ),
                         subtitle: Text(
                           suggestion.secondaryText,
-                          style: const TextStyle(color: Colors.white70, fontSize: 12),
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 12),
                         ),
                         onTap: () {
                           _searchController.text = suggestion.mainText;
@@ -265,8 +269,8 @@ class _WeatherLocationsScreenState
                                     borderRadius: BorderRadius.circular(20),
                                     onTap: () {
                                       ref
-                                          .read(selectedLocationProvider
-                                              .notifier)
+                                          .read(
+                                              selectedLocationProvider.notifier)
                                           .state = location;
                                       ref
                                           .read(selectedCoordinatesProvider
@@ -329,16 +333,15 @@ class _WeatherLocationsScreenState
                                                 '${weather.temperature.toStringAsFixed(0)}°',
                                                 style: const TextStyle(
                                                   fontSize: 40,
-                                                  fontWeight:
-                                                      FontWeight.w300,
+                                                  fontWeight: FontWeight.w300,
                                                   color: Colors.white,
                                                 ),
                                               ),
                                               const SizedBox(height: 8),
                                               Image.asset(
                                                 getWeatherIcon(
-                                                  weatherCode: weather
-                                                      .weather.first.id,
+                                                  weatherCode:
+                                                      weather.weather.first.id,
                                                 ),
                                                 width: 40,
                                                 height: 40,
@@ -351,12 +354,12 @@ class _WeatherLocationsScreenState
                                   );
                                 },
                                 loading: () => Container(
-                                height: 96,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                alignment: Alignment.center,
+                                  height: 96,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  alignment: Alignment.center,
                                   child: const CircularProgressIndicator(
                                     valueColor: AlwaysStoppedAnimation<Color>(
                                         Colors.white),
@@ -388,4 +391,3 @@ class _WeatherLocationsScreenState
     );
   }
 }
-
