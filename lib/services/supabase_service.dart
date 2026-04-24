@@ -11,7 +11,7 @@ class DamRecord {
   final double lastWeekLevel;
   final double lastYearLevel;
   final String risk;
-  final DateTime created_at;
+  final DateTime createdAt;
 
   DamRecord({
     required this.id,
@@ -21,7 +21,7 @@ class DamRecord {
     required this.lastWeekLevel,
     required this.lastYearLevel,
     required this.risk,
-    required this.created_at,
+    required this.createdAt,
   });
 
   factory DamRecord.fromMap(Map<String, dynamic> map) {
@@ -40,7 +40,7 @@ class DamRecord {
       lastWeekLevel: level - weeklyChange,
       lastYearLevel: level - yearlyChange,
       risk: map['risk'] as String? ?? '',
-      created_at: rawTimestamp is String
+      createdAt: rawTimestamp is String
           ? (DateTime.tryParse(rawTimestamp) ?? DateTime.now())
           : DateTime.now(),
     );
@@ -159,7 +159,7 @@ class SupabaseDamService {
     final lastYear =
         dams.map((d) => d.lastYearLevel).reduce((a, b) => a + b) / dams.length;
     final latest =
-        dams.map((d) => d.created_at).reduce((a, b) => a.isAfter(b) ? a : b);
+        dams.map((d) => d.createdAt).reduce((a, b) => a.isAfter(b) ? a : b);
 
     return (
       thisWeek: _clampPercent(thisWeek),
@@ -187,7 +187,7 @@ class SupabaseDamService {
     final lastYear =
         dams.map((d) => d.lastYearLevel).reduce((a, b) => a + b) / dams.length;
     final latest =
-        dams.map((d) => d.created_at).reduce((a, b) => a.isAfter(b) ? a : b);
+        dams.map((d) => d.createdAt).reduce((a, b) => a.isAfter(b) ? a : b);
 
     return ProvinceRecord(
       thisWeekLevel: _clampPercent(thisWeek),
