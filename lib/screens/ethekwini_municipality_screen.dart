@@ -1,11 +1,11 @@
+import 'package:appmaniazar/constants/app_colors.dart';
+import 'package:appmaniazar/dam_data_providers.dart';
+import 'package:appmaniazar/views/gradient_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
-import 'package:appmaniazar/providers/firebase_providers.dart';
-import 'package:appmaniazar/views/gradient_container.dart';
-import 'package:appmaniazar/constants/app_colors.dart';
 
 class EThekwiniMunicipalityScreen extends ConsumerWidget {
   const EThekwiniMunicipalityScreen({super.key});
@@ -68,7 +68,8 @@ class EThekwiniMunicipalityScreen extends ConsumerWidget {
                         frameBuilder: (context, child, composition) {
                           if (composition == null) {
                             return const Center(
-                              child: CircularProgressIndicator(color: Colors.white),
+                              child: CircularProgressIndicator(
+                                  color: Colors.white),
                             );
                           }
                           return child;
@@ -136,13 +137,15 @@ class EThekwiniMunicipalityScreen extends ConsumerWidget {
                               ElevatedButton(
                                 onPressed: () {
                                   ref.invalidate(
-                                    metroTotalsProvider('EthekwiniMetro/TA4T67lkywuWrfqtrG8z'),
+                                    metroTotalsProvider(
+                                        'EthekwiniMetro/TA4T67lkywuWrfqtrG8z'),
                                   );
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,
                                   foregroundColor: Colors.blue,
-                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 24, vertical: 12),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),

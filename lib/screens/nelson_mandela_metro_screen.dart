@@ -1,5 +1,5 @@
 import 'package:appmaniazar/constants/app_colors.dart';
-import 'package:appmaniazar/providers/firebase_providers.dart';
+import 'package:appmaniazar/dam_data_providers.dart';
 import 'package:appmaniazar/views/gradient_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
